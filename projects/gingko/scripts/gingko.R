@@ -1,0 +1,211 @@
+library(fpp3)
+library(openmeteo)
+library(fabletools)
+
+setwd("C:/Users/drewv/Documents/R/UNH/EFI")
+gingko_dat<-read.csv("gingko.csv")
+
+gingko<-tsibble(gingko_dat,index=Year)
+gingko<-tsibble::fill_gaps(gingko)
+
+#plot
+gingko |>
+  autoplot(Julian.day) +
+  labs(y="Julian Day",x="Year")+
+  stat_smooth(method="lm")
+
+gingko |>
+  gg_lag(Julian.day,geom="point")
+
+gingko |>
+  ACF(Julian.day,lag_max = 47) |>
+  autoplot()
+
+
+
+# Let's get temp, precip, and wind speed data  with era5
+
+gingko_coords<-c(43.136806, -70.934278)
+nh_hist<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
+                hourly=c("soil_temperature_0_to_7cm"))
+nh_hist_daily_soil_sum<-nh_hist%>%
+  group_by()
+  summarise(hourly_soil_temperature_0_to_7cm)
+#nh_hist_day<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
+#                daily=c("temperature_2m_min","precipitation_sum","windspeed_10m_max"),
+#                model="ecmwf_ifs04")
+##write.csv(nh_hist_day,"nh_hist.csv")
+#nh_hist<-read.csv("nh_hist.csv")
+#nh_hist$date<-as.Date(nh_hist$date)
+#nh_hist<-na.omit(nh_hist)
+#nh_hist<-nh_hist|>select(-X)|>tsibble(index=date)
+#
+#
+#nh_hist |>
+#  ACF(daily_precipitation_sum ,lag_max = 365) |>
+#  autoplot()
+#
+#nh_hist |>
+#  ACF(daily_windspeed_10m_max ,lag_max = 365) |>
+#  autoplot()
+
+
+
+#now get weather station data
+noaa_hist<-read.csv("noaa_hist.csv")
+noaa_hist$date<-as.Date(noaa_hist$date,format="%m/%d/%Y")
+noaa_hist<-na.omit(noaa_hist)
+
+noaa_hist<-noaa_hist|>tsibble(index=date)
+
+#get first frost dates
+dates<-unique(gingko$Year)
+
+
+for (i in 1:length(dates)){
+  #era5
+ # dates_i_era5<-nh_hist|>
+ #   dplyr::filter(year(date)==dates[i]) |>
+ #   dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
+ # frost_dates_era5<-dates_i_era5 |>
+ #   dplyr::filter(daily_temperature_2m_min <=(-3.888))
+ # first_frost_era5<-as.Date(frost_dates_era5[[1,1]])
+ # first_frost_julian_era5<-julian(first_frost_era5,origin=as.Date(paste0(dates[i],"-01-01")))
+  dates_i_noaa1<-noaa_hist|>
+    dplyr::filter(year(date)==dates[i]) |>
+    dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
+  frost_dates_noaa1<-dates_i_noaa1 |>
+    dplyr::filter(temp_min <=32)
+  first_frost_noaa1<-as.Date(frost_dates_noaa1[[1,3]])
+  first_frost_julian_noaa1<-julian(first_frost_noaa1,origin=as.Date(paste0(dates[i],"-01-01")))
+  #noaa
+  dates_i_noaa<-noaa_hist|>
+    dplyr::filter(year(date)==dates[i]) |>
+    dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
+  frost_dates_noaa<-dates_i_noaa |>
+    dplyr::filter(temp_min <=25)
+  first_frost_noaa<-as.Date(frost_dates_noaa[[1,3]])
+  first_frost_julian_noaa<-julian(first_frost_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  gingko[i,3]<-first_frost_noaa1
+  gingko[i,4]<-first_frost_julian_noaa1
+  gingko[i,5]<-first_frost_noaa
+  gingko[i,6]<-first_frost_julian_noaa 
+  
+  
+  
+}
+
+
+
+
+gingko<-gingko|>
+  rename("frost_date_32"="...3","frost_date_julian_32"="...4","frost_date_noaa_25"="...5","frost_date_julian_noaa_25"="...6")
+
+gingko<-gingko|>
+  pivot_longer(cols=starts_with("frost_date_julian"),
+               names_to="data_source",
+               values_to="julian_frost")
+
+ggplot(data=gingko,aes(x=julian_frost,y=Julian.day,color=data_source))+
+  geom_point()+
+  geom_abline(slope=1,intercept=0,linetype="dashed")+labs(x="Frost Julian Day",y="Gingko Leaf Drop Julian Day",color="Data Source")
+
+ggplot()+
+  geom_line(data=gingko,aes(x=Year,y=Julian.day),color="black")+
+  stat_smooth(data=gingko,aes(x=Year,y=Julian.day),method="lm",color="black")+
+  geom_line(data=gingko,aes(x=Year,y=julian_frost,color=data_source))+
+  stat_smooth(data=gingko,aes(x=Year,y=julian_frost,color=data_source),method="lm")
+
+#######################
+#era5
+library(mcera5,attach.required=T)
+library(ecmwfr)
+library(microclima)
+library(NicheMapR)
+library(devtools)
+library(tidyverse)
+library(ncdf4)
+library(curl)
+library(keyring)
+library(abind)
+library(lubridate)
+library(tidync)
+library(microctools)
+
+uid <- "andrewrvilleneuve@gmail.com"
+
+cds_access_token <- "2f68e926-d753-4d73-90c1-5a5102c239e1"
+
+
+ecmwfr::wf_set_key(user = uid,
+                   key = cds_access_token)
+durham_coords<-c(43.136722, -70.934333)
+xmn <- durham_coords[2]
+xmx <- durham_coords[2]
+ymn <- durham_coords[1]
+ymx <- durham_coords[1]
+
+# temporal extent
+st_time <- as.POSIXlt("1977-01-01 00:00", tz = "UTC")
+en_time <- as.POSIXlt("1977-12-01 23:00",  tz = "UTC")
+
+
+# Set a unique prefix for the filename (here based on spatial
+# coordinates), and the file path for downloaded .nc files
+file_prefix <- "era5_durham"
+file_path <- getwd()
+
+
+# build a request (covering multiple years)
+req <- build_era5_request(xmin = xmn, xmax = xmx, 
+                          ymin = ymn, ymax = ymx,
+                          start_time = st_time,
+                          end_time = en_time,
+                          outfile_name = file_prefix)
+
+request_era5(request = req, uid = uid, out_path = file_path,overwrite = T,combine=T)
+#we moved the resultant file to the era_data folder
+
+
+##########################################
+#note: the nc file request downloaded .nc files on a monthly basis, so we had to combine files into whole year .nc files using cdo program on linux
+#same start date
+st_time <- as.POSIXlt("2023-07-22 00:00", tz = "UTC")
+en_time23<-as.POSIXlt("2023-12-31 23:00", tz = "UTC")
+
+#all years nc
+nc_file <- "era5_41_47_-26_-20_202.nc"
+my_nc<-paste0(file_path,"/era_data/",nc_file)
+
+y<- -22.55423
+x<- 43.285767
+clim_point23<-extract_clim(nc = my_nc,
+                           long = x,
+                           lat = y,
+                           start_time = st_time,
+                           end_time = en_time23,
+                           format = "microclima")
+clim_point23$obs_time<-as.POSIXct(clim_point23$obs_time,tz = "UTC")
+
+precip_point23 <- extract_precip(nc = my_nc, long = x, lat = y,
+                                 start_time = st_time,  
+                                 end_time = en_time23,
+                                 convert_daily = F)
+precip23<-data.frame("precip"=precip_point23,
+                     "datetime" = seq.POSIXt(from=st_time,to=en_time23,by="hour"))
+
+r <- microclima::get_dem(lat = y, long = x, resolution = 30)
+
+temps23 <- microclima::runauto(r = r, dstart = "01/01/2023",dfinish = "31/12/2023", 
+                               hgt = 2, l = NA, x = NA, 
+                               habitat = "Barren or sparsely vegetated",
+                               hourlydata = as.data.frame(clim_point23), 
+                               dailyprecip = precip_point23, 
+                               plot.progress= T,coastal=T)
+
+air_temps<-salary_temps%>%dplyr::filter(site=="saleb10_chezFred")
+era5_air<-clim_point%>%rename("temp" = "temperature","datetime" = "obs_time")%>%mutate("site" = "era5")
+air_Temps<-bind_rows(era5_air,air_temps)
+
+ggplot(data=air_Temps,aes(x=datetime,y=temp,group=site,color=site),alpha=0.01)+geom_line()
