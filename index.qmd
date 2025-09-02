@@ -6,6 +6,6 @@ editor: visual
 
 ## Welcome
 
--   [Fall 2025 Working Group]](fall_2025/)
+-   [Fall 2025 Working Group](fall_2025/)
 
 -   [Projects](projects/)
