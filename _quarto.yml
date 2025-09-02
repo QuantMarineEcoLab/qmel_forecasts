@@ -1,0 +1,20 @@
+project:
+  type: website
+
+website:
+  title: "QMEL Forecasts"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: projects/
+        text: Projects
+      - href: meetings/
+        text: Meetings
+      - href: data/
+        text: Data
+
+format:
+  html:
+    theme: cosmo
+    toc: true

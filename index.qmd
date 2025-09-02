@@ -1,0 +1,12 @@
+---
+title: "index.qmd"
+author: "Drew Villeneuve"
+format: html
+editor: visual
+---
+
+## QMEL Forecasting Group
+
+-   [Fall 2025 Working Group] (fall_2025/)
+
+-   [Projects](projects/)
