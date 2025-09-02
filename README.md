@@ -1,2 +1,2 @@
-# qmel_forecasts
-Collective forecasting activities of the QMEL lab
+# QMEL Forecasts
+This repository contains various forecasting activities of the QMEL lab at the University of New Hampshire. We started this repository in the Fall of 2025 during a lab workshop working through Hyndman and Athanasapolous [Forecasting: Principles and Practive 3rd edition](https://otexts.com/fpp3/). Future lab activities may involve Ginkgo forecasts, NEON Forecasting challenge, and forecsating NERRS data. 
