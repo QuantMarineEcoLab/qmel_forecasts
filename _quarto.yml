@@ -1,3 +1,4 @@
+---
 project:
   type: website
 
@@ -11,7 +12,6 @@ website:
         text: Fall 2025 Workshop
       - href: projects/
         text: projects
-
 
 format:
   html:
