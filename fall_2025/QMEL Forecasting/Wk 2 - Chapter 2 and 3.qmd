@@ -1,0 +1,229 @@
+---
+title: "QMEL Forecasting Workshop - Wk 2 Time Series Graphics and Decomposition"
+format: html
+editor: visual
+---
+
+# Welcome QMEL!
+
+Today we will be discussing Chapters 2 and 3 of Foresting: Principles and Practice by Hyndman and Athanasopoulos
+
+For those familiar with time series analysis these chapters may be review, but concepts presented here serve as important building blocks for forecasting!
+
+## Overview
+
+For each chapter:
+
+-   Quickly review important concepts from the chapter
+-   Use some of these methods on personal data
+-   Review chapter exercises
+
+At the end:
+
+-   Work on the Ginkgo data set?
+
+## Chapter 2 - Time series graphics
+
+### Notes from the chapter:
+
+-   Using the tsibble package and tsibble objects
+
+-   Describing time series data
+
+    -   Trend - A long term increase of decrease in the data. This does not have to be linear, it can sometimes "change directions".
+
+    -   Seasonal - A seasonal pattern occurs when a time series is affected by seasonal factors such as the time of year or the day of the week. Seasonality is always of a fixed and known period.
+
+    -   Cyclic - A cycle occurs when the data exhibits rises and falls that are not of a fixed frequency.
+
+    -   In general, the average length of cycles is longer than the length of a seasonal pattern and the magnitudes of cycles tend to be more variable than the magnitudes of seasonal patterns.
+
+-   Types of plots
+
+    -   Time plots - observations are plotted against the time of observation - autoplot()
+    -   Seasonal plots - data are plotted against the individual “seasons” - gg_season()
+    -   Subseries plots - data for each season are collected together in separate mini time plots - gg_subseries()
+    -   Scatter plots - useful for visualizing individual time series, and useful to explore the relationships between time series
+    -   Lag plots - shows lagged values of the time series - gg_lag()
+    -   Autocorrelation - measures the linear relationship between *lagged values* of a time series - ACF()
+    -   White noise - time series that have no autocorrelation
+
+### Data Examples
+
+Here I will use some of these functions to plot temperature data from a kelp forest site that is part of the Santa Barbara Coastal LTER (AQUE).
+
+![Figure:Map of SBC LTER Sites](SBC_LTER_MAP.png)
+
+This data can be found here: https://sbclter.msi.ucsb.edu/data/catalog/package/?package=knb-lter-sbc.13
+
+```{r , warning = FALSE}
+    # Loading packages
+    library(tidyverse)
+    library(tsibble)
+    library(here)
+    library(janitor)
+    library(feasts)
+    library(fpp3)
+
+    # Loading data
+    sbc_temp<-read_csv(here("Data", "SBC_LTER_Bottom_temp_all_years_20250128.csv")) |> 
+      filter(SITE %in% c("AQUE")) |> 
+      select(SITE, DATE_LOCAL, TIME_LOCAL, TEMP_C) 
+    
+    # Adjust column names
+    sbc_temp<-clean_names(sbc_temp)
+    
+    # Calculate Daily Summaries
+    daily_aque_temp<-sbc_temp |> 
+      group_by(date_local) |> 
+      summarise(mean_temp_c = mean(temp_c))
+
+    # Converting daily summary df to a tsibble object
+    daily_aque_temp<-daily_aque_temp |> 
+      mutate(date_local = as_date(date_local)) |> 
+      as_tsibble(index = date_local) |> 
+      fill_gaps()
+    
+    # Plotting Data
+    daily_aque_temp |> 
+      autoplot(mean_temp_c)
+
+    daily_aque_temp |> 
+      gg_season(mean_temp_c)
+
+    daily_aque_temp |>
+      ACF(mean_temp_c) |> autoplot()
+
+    # Calculate Monthly Summaries
+    monthly_aque_temp<-sbc_temp |> 
+      mutate(month = month(date_local)) |> 
+      mutate(year = year(date_local)) |> 
+      group_by(year, month) |> 
+      summarise(mean_temp = mean(temp_c)) |> 
+      unite(monthyear, year, month, sep = " ") |> 
+      mutate(monthyear = yearmonth(monthyear)) |> 
+      as_tsibble(index = monthyear) |> 
+      filter(monthyear >= yearmonth("2003 Aug"))
+      
+    monthly_aque_temp |> 
+      autoplot(mean_temp)
+
+    monthly_aque_temp|> 
+     gg_season(mean_temp)
+
+   monthly_aque_temp|> 
+      gg_subseries(mean_temp)
+
+    monthly_aque_temp |> 
+     gg_lag(mean_temp)
+
+    monthly_aque_temp |>
+      ACF(mean_temp) |> autoplot()
+
+```
+
+What are some are some observations that we can make from these plots? How might these methods help you better understand your data?
+
+## Exercises from the text
+
+7.  Monthly Australian retail data is provided in aus_retail. Select one of the time series as follows (but choose your own seed value):
+
+```{r}
+aus_retail
+
+set.seed(12345678)
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+
+set.seed(818)
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+# Other specialized food retailing
+
+myseries |> 
+  autoplot(Turnover)
+# I see an obviously increasing trend and maybe cyclicity, but there is not any obvious seasonality. 
+myseries |> 
+  gg_season(Turnover)
+# Again not seeing a seasonality, but there is increased variability in the later years.
+
+myseries |> 
+  gg_subseries(Turnover)
+# Only seasonality is just a small uptick in December maybe related to more shopping during the holidays. There turnover for these items reached their peak in early 2000's, but then decreased.
+
+myseries |> 
+  gg_lag(Turnover)
+
+myseries |>
+  ACF(Turnover) |> autoplot()
+# Just annual cycles?
+
+```
+
+## Chapter 3 - Time series decomposition
+
+## Notes from the chapter:
+
+We can think of a time series as comprising three components: a trend-cycle component, a seasonal component, and a remainder component (containing anything else in the time series). This chapter explores common methods for extracting these components from a time series. This can help us better understand the time series, but also improve forecasting accuracy. Before decomposition, transformation is sometimes needed, so we will touch on that too!
+
+-   Types of transformation:
+    -   Calendar adjustments
+    -   Population adjustments
+    -   Inflation adjustments
+    -   Mathematical transformations - When variation in the data changes throughout the time series, transformations can be helpful.
+        -   log transformation
+        -   power transformation
+        -   Box-Cox transformations - includes both logarithms and power transformations.
+-   Time series components - trend, season, and remainder
+-   Moving averages - the first step in classical decomposition methods
+-   Methods for decomposition
+    -   Classical decomposition (additive and multiplicative)
+        -   Widely used, but not recommended. Issues include the loss of the first and last few observations when estimating the trend cycle. Trend-cycle estimate tends to over-smooth data. Assumes that the seasonal component repeats from year to year. Not very good at dealing with "unusual" values.
+    -   X-11
+        -   Includes extra steps to overcome some of the shortfalls of classical decomposition, which include the end points, and the seasonal component is allowed to vary slowly over time. Methods for both additive and multiplicative decomposition. Robust to outliers.
+    -   SEATS
+    -   STL - Seasonal and Trend decomposition using Loess
+        -   Can handle any type of seasonality. The trend-cycle can also be controlled by the user. Robust to outliers
+
+### Data Examples
+
+```{r}
+# Moving average 
+monthly_aque_temp |> 
+  mutate(
+    `7-MA` = slider::slide_dbl(mean_temp, mean,
+                .before = 3, .after = 3, .complete = TRUE)) |> 
+  autoplot(mean_temp) +
+  geom_line(aes(y = `7-MA`), colour = "purple")
+  
+# Decomposing the time series
+dcmp<-monthly_aque_temp |> 
+  model(stl = STL(mean_temp))
+
+# Looking at the different compnents
+components(dcmp) |> autoplot()
+
+components(dcmp) |> 
+as_tsibble() |>
+  autoplot(mean_temp, colour="gray") +
+  geom_line(aes(y=trend), colour = "purple") +
+  labs(
+    y = "Mean Monthly Temp (C)",
+    title = "Benthic Temperature at AQUE Kelp Forest Site")
+
+# Seasonally adjusted time series - contains the remainder and trend
+components(dcmp) |>
+  as_tsibble() |>
+  autoplot(mean_temp, colour = "gray") +
+  geom_line(aes(y=season_adjust), colour = "#0072B2") +
+  labs(y = "Mean Monthly Temp (C)",
+       title = "Benthic Temperature at AQUE Kelp Forest Site")
+
+
+```
+
+## Exercises
+
+Any exercises that y'all are interested in?
+
+## Ginkgo Exercise

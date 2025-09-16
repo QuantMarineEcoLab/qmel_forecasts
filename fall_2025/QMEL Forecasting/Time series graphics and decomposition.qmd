@@ -1,0 +1,823 @@
+---
+title: "QMEL Forecasting Series - Time Series Graphics and Decomposition"
+author: "Jannine Chamorro"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+# 1. Chapter 2 - Time serires graphics (Notes)
+
+Time series - a list of numbers and information about that time those numbers were recorded
+```{r}
+library(tidyverse)
+library(tsibble)
+library(fpp3)
+
+```
+
+```{r}
+# tsibble extends tibble objects by introducing a temporal structure. You can manipulate multiple time series. Work well with tidyverse functions!
+
+# Contain:
+# Index Time information about an observations - ex. Yearly, Quarterly
+# Key - unique time series in the data set, ex Countries, Region
+# Measured variables
+
+# Creating your own tsibble
+y <- tsibble(
+  Year = 2015:2019,
+  Observation = c(123, 39, 78, 52, 110),
+  index = Year)
+
+# But more frequently you will convert your own read in data 
+
+my_data<-tibble(
+  year = 2015:2019,
+  y = c(123, 39, 78, 52, 110)) |> 
+  as_tsibble(index=year)
+
+
+z <- tibble(
+  Month = c("2019 Jan", "2019 Feb", "2019 Mar", "2019 Apr", "2019 May"),
+  Obersvation = c(50, 23, 34, 30, 25)
+)
+
+# Month is recognized as a character, but using tsibble we can convert this to a mothly time object
+z |> 
+  mutate(Month = yearmonth(Month)) |> 
+  as_tsibble(index = Month)
+
+# tsibble can also store multiple time series in a single object
+
+# Example, here we are informed that we have 14 different time series. The 14 different times series in the object are uniquely identified by the Length and Sex variables.
+olympic_running
+
+olympic_running |> distinct(Sex)
+olympic_running |> distinct(Length)
+
+# We can also used tidy functions such as mutate(), filter(), select(), and summarise()
+
+# Monthly data on Medicare Australia prescription data from July 1991 to June 2008
+PBS
+
+a10 <- PBS |>
+  filter(ATC2 == "A10") |>
+  select(Month, Concession, Type, Cost) |>
+  summarise(TotalC = sum(Cost)) |>
+  mutate(Cost = TotalC / 1e6) 
+
+```
+
+
+```{r}
+# Most times we are reading our data into R, we can convert this data into a tsibble object as well.
+prison <- readr::read_csv("https://OTexts.com/fpp3/extrafiles/prison_population.csv")
+
+prison.tib <- prison |> 
+  mutate(Quarter = yearquarter(Date)) |> 
+  select(-Date) |> 
+  as_tsibble(key = c(State, Gender, Legal, Indigenous),
+                     index = Quarter)
+
+prison
+prison.tib # 64 differnt data sets
+
+```
+
+Seasonal Periods
+```{r}
+
+```
+
+Time Plots
+```{r}
+ansett
+
+melsyd_economy <- ansett |> 
+  filter(Airports == "MEL-SYD", Class == "Economy") |> 
+  mutate(Passengers = Passengers/1000)
+
+autoplot(melsyd_economy, Passengers) +
+  labs(Title = "Ansett airlines economy class",
+       subtitle = "Melbourne-Sydney",
+       y = "Passengers('000)")
+
+# auto plot will be used frequently 
+# what can we say upon first observation of this time series
+
+autoplot(a10, Cost)+
+  labs(y="$ (millions)",
+       title = "Australian antidiabetic drug sales")
+# Here we see an increasing trend, with a seasonal patters.
+# Forecasts would need to take these into consideration
+
+```
+
+
+Important Definitions
+
+Trend - A long term increase of decrease in the data. This does not have to be linear, it can sometimes "change directions".
+
+Seasonal - A seasonal pattern  occurs when a time series is affected by seasonal factors such as the time of year or the day of the week. Seasonality is always of a fixed and known period. 
+
+Cyclic - A cycle occurs when the data exhibits rises and falls that are not of a fixed frequency.
+
+In general, the average length of cycles is longer than the length of a seasonal pattern and the magnitudes of cycles tend to be more variable than the magnitudes of seasonal patterns.
+
+Seasonal Plots
+```{r}
+a10
+
+a10 |> 
+  gg_season(Cost, lables = "both")+
+  labs(y = "$ (millions)",
+       title = "Seasonal plot: Antidiabetic drug sales")
+```
+
+
+Multiple seasonal periods
+
+```{r}
+vic_elec
+
+vic_elec |> gg_season(Demand, period = "day") +
+  theme(legend.position = "none") +
+  labs(y="MWh", title = "Electricity demand: Victoria")
+
+vic_elec |> gg_season(Demand, period = "week") +
+  theme(legend.position = "none") +
+  labs(y="MWh", title="Electricity demand: Victoria")
+
+vic_elec |> gg_season(Demand, period = "year") +
+  labs(y="MWh", title="Electricity demand: Victoria")
+```
+
+Seasonal sub series plots
+```{r}
+# Data from each season are collected together in separate mini time plots
+# Plots each season separately
+
+a10 |>
+  gg_subseries(Cost) +
+  labs(
+    y = "$ (millions)",
+    title = "Australian antidiabetic drug sales"
+  )
+
+# Blue line is the average value for each month
+
+# Not too informative for this data
+
+holidays <- tourism |>
+  filter(Purpose == "Holiday") |>
+  group_by(State) |>
+  summarise(Trips = sum(Trips))
+holidays
+
+autoplot(holidays, Trips) +
+  labs(y = "Overnight trips ('000)",
+       title = "Australian domestic holidays")
+
+gg_season(holidays, Trips) +
+  labs(y = "Overnight trips ('000)",
+       title = "Australian domestic holidays")
+# Seasonality in some states is very different than the seasonality in other states
+
+
+holidays |>
+  gg_subseries(Trips) +
+  labs(y = "Overnight trips ('000)",
+       title = "Australian domestic holidays")
+
+```
+Scatterplots
+
+Sometimes we are intereted in relationships between multiple time series
+```{r}
+vic_elec |>
+  filter(year(Time) == 2014) |>
+  autoplot(Demand) +
+  labs(y = "GW",
+       title = "Half-hourly electricity demand: Victoria")
+```
+
+# 2. Chapter 2 - Exercises
+
+1. Explore the following four time series: Bricks from aus_production, Lynx from pelt, Close from gafa_stock, Demand from vic_elec.
+```{r}
+
+aus_production # Looks to be quarterly data
+
+aus_production |> 
+  autoplot(Bricks)
+
+pelt # Yearly data
+
+pelt |> 
+  autoplot(Lynx)
+
+gafa_stock # daily data that skips weekends?
+gafa_stock |> 
+  autoplot(Close)
+
+vic_elec # Data collected every 30 min
+
+vic_elec |> 
+  autoplot(Demand) 
+
+```
+
+2. Use filter() to find what days corresponded to the peak closing price for each of the four stocks in gafa_stock.
+```{r}
+gafa_stock<-gafa_stock # daily data that skips weekends?
+
+gafa_stock
+
+# Ploting data
+ gafa_stock|> 
+  autoplot(Close)
+ 
+ dates <- gafa_stock|> 
+  group_by(Symbol) |> 
+   mutate(peak_close = max(Close)) |> 
+   filter(Close == peak_close) |> 
+   select(Symbol, Date, Close)
+ 
+```
+
+3. 
+```{r}
+library(here)
+tute1 <- readr::read_csv(here("Data", "tute1.csv"))
+View(tute1)
+
+mytimeseries <- tute1 |>
+  mutate(Quarter = yearquarter(Quarter)) |>
+  as_tsibble(index = Quarter)
+
+mytimeseries |>
+  pivot_longer(-Quarter)|>
+  ggplot(aes(x = Quarter, y = value, colour = name)) +
+  geom_line() +
+  facet_grid(name ~ ., scales = "free_y")
+```
+
+4. 
+```{r}
+library(USgas)
+
+us_total
+
+us_total <- us_total |>
+  as_tsibble(index = year, key = state) 
+  
+us_total |> 
+  filter(state %in% c("Maine", "Vermont", "New Hampshire", "Massachusetts", "Connecticut", "Rhode Island")) |> 
+  ggplot(aes(x = year, y = y, colour = state)) +
+  geom_line()
+```
+
+5. 
+```{r}
+tourism
+
+tourism2 <- readxl::read_excel(here("Data", "tourism.xlsx"))
+
+# Create a tsibble which is identical to the tourism tsibble from the tsibble package.
+tourism2 <- tourism2 |> 
+  mutate(Quarter = yearquarter(Quarter)) |>
+  as_tsibble(index = Quarter, key = c(Region, State, Purpose))
+
+# Find what combination of Region and Purpose had the maximum number of overnight trips on average.
+tourism2 |> 
+  group_by(Region, Purpose) |> 
+  mutate(max_trips = max(Trips)) |> 
+  filter(Trips == max_trips) |> 
+  arrange(desc(max_trips))
+
+# state_tourism0 <- tourism2 |> 
+#   unite(Region_Purpose, Region, Purpose, sep = " ") |> 
+#   group_by(Region_Purpose, State) |> 
+#   summarise(total = sum(Trips)) |> 
+#   group_by(State) |> 
+#   summarise(State_Total = sum(total))
+
+# Create a new tsibble which combines the Purposes and Regions, and just has total trips by State.
+state_tourism <- tourism2 |> 
+  group_by(State) |> 
+  summarise(State_Total = sum(Trips)) 
+state_tourism 
+
+# If not starting with a tsibble
+state_tourism <- tourism2 |> 
+  group_by(State) |> 
+  summarise(State_Total = sum(Trips)) |> 
+  mutate(Quarter = yearquarter(Quarter)) |> 
+  as_tsibble(index = Quarter, key = State)
+state_tourism 
+  
+```
+
+6. The aus_arrivals data set comprises quarterly international arrivals to Australia from Japan, New Zealand, UK and the US.
+```{r}
+# Use autoplot(), gg_season() and gg_subseries() to compare the differences between the arrivals from these four countries.
+
+aus_arrivals
+
+aus_arrivals |> 
+  autoplot(Arrivals)
+
+aus_arrivals |> 
+  gg_season(Arrivals)
+
+aus_arrivals |> 
+  gg_subseries(Arrivals)
+
+# Travel from Japan to Australia increased from 1980 to the mid-90s, but then declined. Travel from NZ, the UK, and the US has increased over time, kind of independent of season, expect for maybe Q2 and Q3 for the UK. This seasonality for the UK may be driven by more recent years. Unusual?
+
+```
+
+7. Monthly Australian retail data is provided in aus_retail. Select one of the time series as follows (but choose your own seed value):
+```{r}
+set.seed(12345678)
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+
+set.seed(818)
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+# Other specialized food retailing
+
+myseries |> 
+  autoplot(Turnover)
+# I see an obviously increasing trend and maybe cyclicity, but there is not any obvious seasonality. 
+myseries |> 
+  gg_season(Turnover)
+# Again not seeing a seasonality, but there is increased variability in the later years.
+
+myseries |> 
+  gg_subseries(Turnover)
+# Only seasonality is just a small uptick in December maybe related to more shopping during the holidays. There turnover for these items reached their peak in early 2000's, but then decreased.
+
+myseries |> 
+  gg_lag(Turnover)
+
+myseries |>
+  ACF(Turnover) |> autoplot()
+# Just annual cycles?
+
+```
+8. Using graphing functions
+```{r}
+# Exploring US Employment Data
+us_employment
+
+us_employment |> 
+  filter(Title == "Total Private") |> 
+  autoplot(Employed)
+# Increasing trend, some seasonality and cylcing.
+
+us_employment |> 
+  filter(Title == "Total Private") |> 
+  gg_season(Employed)
+
+us_employment |> 
+  filter(Title == "Total Private") |> 
+  gg_subseries(Employed)
+# Seasonality is not as obvious as initially thought
+
+us_employment |> 
+  filter(Title == "Total Private") |> 
+  gg_lag(Employed)
+
+total_private<- us_employment |> 
+  filter(Title == "Total Private")
+
+total_private |>
+  ACF(Employed) |> autoplot()
+# Data is mostly trended
+
+```
+
+```{r}
+# Exploring Pelt Data --------
+
+pelt
+
+pelt |> 
+  ggplot() +
+  geom_line(aes(x = Year, y = Hare), colour = "grey")+
+  geom_line(aes(x = Year, y = Lynx), colour = "black")
+
+pelt |> 
+  autoplot(Hare)
+
+# Annual data, so these can't be run
+# pelt |> 
+#   gg_season(Hare)
+# 
+# pelt |> 
+#   gg_subseries(Hare)
+
+pelt |> 
+  gg_lag(Hare, geom = "point")
+
+pelt |>
+  ACF(Hare) |> autoplot()
+# 10 year cyclical behavior. Negative signigicant negative relationship between year 4-6.
+
+pelt |>
+  ACF(Lynx) |> autoplot()
+# Follows similar pattern to hares, by the acf values are much higher
+```
+
+
+9. The following time plots and ACF plots correspond to four different time series. Your task is to match each time plot in the first row with one of the ACF plots in the second row.
+
+3 - D, 1 - B, 2 - A, 4 - C
+
+10. The aus_livestock data contains the monthly total number of pigs slaughtered in Victoria, Australia, from Jul 1972 to Dec 2018. Use filter() to extract pig slaughters in Victoria between 1990 and 1995. Use autoplot() and ACF() for this data. How do they differ from white noise? If a longer period of data is used, what difference does it make to the ACF?
+```{r}
+aus_livestock
+
+aus_livestock<-aus_livestock
+
+victoria_pigs<-aus_livestock |> 
+  filter(Animal == "Pigs") |> 
+  filter(State == "Victoria") |> 
+  mutate(Year = year(Month)) |> 
+  filter(Year >= 1990 & Year <= 1995)
+
+
+victoria_pigs |>
+  autoplot()
+# Upwards trend
+
+victoria_pigs |>
+  gg_season()
+
+victoria_pigs |>
+  gg_subseries()
+
+victoria_pigs |>
+  ACF(Count) |> autoplot()
+# This series is different from white noise in that may of the spike fall outside of the confidence band. 
+  
+```
+11. 
+```{r}
+dgoog <- gafa_stock |>
+  filter(Symbol == "GOOG", year(Date) >= 2018) |>
+  mutate(trading_day = row_number()) |>
+  update_tsibble(index = trading_day, regular = TRUE) |>
+  mutate(diff = difference(Close))
+
+# Why was it necessary to re-index the tsibble?
+# Data is not collected on the weekends, which make the time series non-continuous so we re-index using trading days instead.
+
+# Plot these differences and their ACF.
+dgoog |> 
+  autoplot(diff)
+ 
+dgoog |> 
+  ACF(diff) |> 
+  autoplot()
+
+# Do the changes in the stock prices look like white noise?
+# Gerernally changes in stock prices look like white noise since they alll fall in under the confidence band
+```
+
+# 3. Chapter 3 -Time series decomposition (Notes)
+```{r}
+
+```
+
+# 4. Chapter 3 - Exercises
+
+1. Consider the GDP information in global_economy. Plot the GDP per capita for each country over time. Which country has the highest GDP per capita? How has this changed over time?
+```{r}
+global_economy
+
+global_economy |> 
+  mutate(GDP_per_capita = GDP/Population) |> 
+  autoplot(GDP_per_capita)+
+  theme(legend.position = "none")
+```
+
+2. For each of the following series, make a graph of the data. If transforming seems appropriate, do so and describe the effect.
+```{r}
+
+# United States GDP from global_economy.
+global_economy |> 
+  mutate(GDP_per_capita = GDP/Population) |> 
+  filter(Country == "United States") |> 
+  autoplot(GDP_per_capita)
+  
+
+# Slaughter of Victorian “Bulls, bullocks and steers” in aus_livestock
+aus_livestock |> 
+  filter(Animal == "Bulls, bullocks and steers") |> 
+  filter(State == "Victoria") |> 
+  autoplot(Count)
+
+# Accounting for days in the month
+aus_livestock |> 
+  filter(Animal == "Bulls, bullocks and steers") |> 
+  filter(State == "Victoria")|> 
+  mutate(days = days_in_month(Month)) |> 
+  mutate(count_adj = Count/days) |> 
+  autoplot(count_adj)
+
+# Trend are still similar, they just be a little more accurate
+
+# Victorian Electricity Demand from vic_elec
+vic_elec |> 
+  autoplot(Demand)
+
+# Gas production from aus_production
+aus_production |> 
+  autoplot(Gas)
+
+aus_production |> 
+  autoplot(log(Gas))
+
+```
+
+3. Why is a Box-Cox transformation unhelpful for the canadian_gas data?
+```{r}
+aus_production |> 
+  autoplot(Gas)
+
+canadian_gas |> 
+  autoplot()
+# Variability is somewhat stable? Differences among years tend to be due to an increasing trend ans seasonality.
+
+```
+
+4. What Box-Cox transformation would you select for your retail data (from Exercise 7 in Section 2.10)?
+
+```{r}
+myseries |> 
+  autoplot(Turnover)
+
+myseries |> 
+  autoplot(log(Turnover))
+# Nope
+
+myseries |> 
+  autoplot(sqrt(Turnover))
+# Nope
+
+# A good value of lambda is one that makes the size of the seasonal variation similar across the whole time series 
+
+lambda<-myseries |> 
+  features(Turnover, features = guerrero) |> 
+  pull(lambda_guerrero)
+
+myseries |> 
+  autoplot(box_cox(Turnover, lambda))+
+  labs(y = "", title = latex2exp::TeX(paste0("Transformed Turnover with $\\lambda$ = ", round(lambda,2)))) 
+# Seems better
+# Negative lambda is suggested when variance decreases as the mean increases?
+
+# Let's explore others
+
+myseries |> 
+  mutate(
+    turnover_lambda0 = box_cox(Turnover, 0), # log-transform
+    turnover_lambda05 = box_cox(Turnover, 0.5), # sqrt-like transform
+    turnover_lambda1 = box_cox(Turnover, 1),  # no transform
+    turnover_lambdaneg1 = box_cox(Turnover, -1)) |> # inverse transform
+  autoplot(turnover_lambdaneg1)
+```
+
+5. For the following series, find an appropriate Box-Cox transformation in order to stabilise the variance. Tobacco from aus_production, Economy class passengers between Melbourne and Sydney from ansett, and Pedestrian counts at Southern Cross Station from pedestrian.
+```{r}
+aus_production |> 
+   autoplot(Tobacco)
+
+# I dont really think a transformation is needed
+
+aus_production |> 
+   mutate(
+    tobacco_lambda0 = box_cox(Tobacco, 0), # log-transform
+    tobacco_lambda05 = box_cox(Tobacco, 0.5), # sqrt-like transform
+    tobacco_lambda1 = box_cox(Tobacco, 1),  # no transform
+    tobacco_lambdaneg1 = box_cox(Tobacco, -1)) |> # inverse transform
+  autoplot(tobacco_lambdaneg1)
+
+
+lambda<-aus_production |> 
+  features(Tobacco, features = guerrero) |> 
+  pull(lambda_guerrero)
+
+aus_production |> 
+  autoplot(box_cox(Tobacco, lambda))+
+  labs(y = "", title = latex2exp::TeX(paste0("Transformed Tobacco with $\\lambda$ = ", round(lambda,2)))) 
+
+# Lambda is very close to 1, which may confirm that a transformation is not needed
+
+
+```
+
+```{r}
+ansett.df<-ansett |> 
+  filter(Airports == "MEL-SYD") |> 
+  filter(Class == "Economy") 
+
+# There are some 0s in the data so, we cannont
+
+ansett |> 
+  filter(Airports == "MEL-SYD") |> 
+  filter(Class == "Economy") |> 
+  autoplot(Passengers)
+
+lambda<-ansett |> 
+  filter(Airports == "MEL-SYD") |> 
+  filter(Class == "Economy") |> 
+  features(Passengers, features = guerrero) |> 
+  pull(lambda_guerrero)
+
+ansett |> 
+  filter(Airports == "MEL-SYD") |> 
+  filter(Class == "Economy") |>
+  autoplot(box_cox(Passengers, lambda))+
+  labs(y = "", title = latex2exp::TeX(paste0("Transformed Passengers with $\\lambda$ = ", round(lambda,2)))) 
+
+ansett |> 
+  filter(Airports == "MEL-SYD") |> 
+  filter(Class == "Economy") |>
+   mutate(
+    passengers_lambda0 = box_cox(Passengers, 0), # log-transform
+    passengers_lambda05 = box_cox(Passengers, 0.5), # sqrt-like transform
+    passengers_lambda1 = box_cox(Passengers, 1),  # no transform
+    passengers_lambdaneg1 = box_cox(Passengers, -1)) |> # inverse transform
+  autoplot(passengers_lambda05)
+
+
+```
+
+```{r}
+pedestrian |> 
+  filter(Sensor == "Southern Cross Station") |> 
+  autoplot(Count)
+# Lots of zeros, perhaps a log transformation
+
+pedestrian |> 
+  filter(Sensor == "Southern Cross Station") |> 
+  autoplot(log(Count))
+
+lambda<-pedestrian |> 
+  filter(Sensor == "Southern Cross Station") |> 
+  features(Count, features = guerrero) |> 
+  pull(lambda_guerrero)
+
+pedestrian |> 
+  filter(Sensor == "Southern Cross Station") |> 
+  autoplot(box_cox(Count, lambda))+
+  labs(y = "", title = latex2exp::TeX(paste0("Transformed Count with $\\lambda$ = ", round(lambda,2)))) 
+```
+
+6. Show that a 3×5 MA is equivalent to a 7-term weighted moving average with weights of 0.067, 0.133, 0.200, 0.200, 0.200, 0.133, and 0.067.
+```{r}
+# In notebook
+
+global_economy |> 
+  filter(Country == "Australia") |> 
+  autoplot(Exports)+
+  labs(y="% of GDP", title="Total Australian Exports")
+
+aus_exports <- global_economy |>
+  filter(Country == "Australia") |>
+  mutate(
+    `5-MA` = slider::slide_dbl(Exports, mean,
+                .before = 2, .after = 2, .complete = TRUE),
+    `3x5-MA` = slider::slide_dbl(`5-MA`, mean,
+                .before = 1, .after = 1, .complete = TRUE))
+aus_exports |> 
+  autoplot(Exports) +
+  geom_line(aes(y = `5-MA`), colour = "purple") +
+  geom_line(aes(y = `3x5-MA`), colour = "orange") +
+  labs(y = "% of GDP",
+       title = "Total Australian exports")
+
+
+```
+
+7. Consider the last five years of the Gas data from aus_production.
+```{r}
+gas <- tail(aus_production, 5*4) |> select(Gas)
+
+# Plot the time series. Can you identify seasonal fluctuations and/or a trend-cycle?
+gas |> 
+  autoplot(Gas)
+
+gas |> 
+  gg_season(Gas)
+
+gas |> 
+  gg_subseries(Gas)
+
+# It looks like there is an upward trend and some seasonality, gas dips during Q1 and Q4 and is highest at during Q3
+
+# Use classical_decomposition with type=multiplicative to calculate the trend-cycle and seasonal indices.
+# Do the results support the graphical interpretation from part a?
+gas |> 
+  model(
+    classical_decomposition(Gas, type = "multiplicative")) |> 
+  components() |> 
+  autoplot()
+# Yes, results support my graphical interpretation!
+
+# Compute and plot the seasonally adjusted data.
+gas |> 
+  model(
+    STL(Gas ~ trend (window = 21)+
+          season(window = "periodic"))) |> 
+  components() |> 
+  autoplot()
+
+# Change one observation to be an outlier (e.g., add 300 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?
+gas[15,1] = 500
+
+gas |> 
+  model(
+    STL(Gas ~ trend (window = 21)+
+          season(window = "periodic"))) |> 
+  components() |> 
+  autoplot()
+
+# The outlier changes seasonal cycle, using the robust function we can get it back.
+
+gas |> 
+  model(
+    STL(Gas ~ trend (window = 21)+
+          season(window = "periodic"),
+        robust = TRUE)) |> 
+  components() |> 
+  autoplot()
+
+gas[20,1] = 500
+
+gas |> 
+  model(
+    STL(Gas ~ trend (window = 21)+
+          season(window = "periodic"))) |> 
+  components() |> 
+  autoplot()
+
+# Having it at the end makes the seasonality look a little more normal, but then messes with the trend
+
+```
+
+8. Recall your retail time series data (from Exercise 7 in Section 2.10). Decompose the series using X-11. Does it reveal any outliers, or unusual features that you had not noticed previously?
+```{r}
+library("seasonal")
+x11_dcmp_myseries <- myseries |>
+  model(x11 = X_13ARIMA_SEATS(Turnover ~ x11())) |>
+  components()
+
+autoplot(x11_dcmp_myseries) +
+  labs(title =
+    "Decomposition of Turnover using X-11.")
+# There are some outliers before Jan 2000 that perhaps I would not have noticed with out this decomposition
+```
+
+9. Figures 3.19 and 3.20 show the result of decomposing the number of persons in the civilian labour force in Australia each month from February 1978 to August 1995.
+
+a. There is an obvious increasing trend. Seasonality exists but at a very small scale when compared to other components of the time series. Seasonal trends are inconsistent. There are a few outliers following Jan 1990, due to the recession.
+
+10. This exercise uses the canadian_gas data (monthly Canadian gas production in billions of cubic metres, January 1960 – February 2005).
+```{r}
+canadian_gas
+
+# Plot the data using autoplot(), gg_subseries() and gg_season() to look at the effect of the changing seasonality over time.
+canadian_gas |> 
+  autoplot()
+
+canadian_gas |> 
+  gg_season()
+
+canadian_gas |> 
+  gg_subseries()
+
+# Seasonality see to be most apparent in the 1970s, still some but more variation throughout the year
+
+# Do an STL decomposition of the data. You will need to choose a seasonal window to allow for the changing shape of the seasonal component.
+canadian_gas |> 
+  model(
+    STL(Volume ~ trend (window = 21)+
+          season(window = 10))) |> 
+  components() |> 
+  autoplot()
+
+# How does the seasonal shape change over time? [Hint: Try plotting the seasonal component using.
+# There is greater seasonality from 1970-200
+
+
+
+```
+
+
