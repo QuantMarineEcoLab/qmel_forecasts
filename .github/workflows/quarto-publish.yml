@@ -23,14 +23,15 @@ jobs:
         with:
           r-version: "4.2"
           
+
+      - name: Restore project library
+        run: Rscript -e 'install.packages("renv"); renv::restore()'
+        
       - name: Cache R packages
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/renv/library
-          key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}
-
-      - name: Restore project library
-        run: Rscript -e 'install.packages("renv"); renv::restore()'
+          key: ${{ runner.os }}-renv-${{ hashFiles('**/renv.lock') }}        
 
       - name: Setup Quarto
         uses: quarto-dev/quarto-actions/setup@v2
