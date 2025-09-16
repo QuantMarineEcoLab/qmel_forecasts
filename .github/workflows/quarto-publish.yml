@@ -26,8 +26,11 @@ jobs:
       - name: Install system libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libudunits2-dev libnetcdf-dev libcurl4-openssl-dev
-          
+          sudo apt-get install -y \
+            libudunits2-dev \
+            libnetcdf-dev \
+            libcurl4-openssl-dev \
+            libsecret-1-dev
 
       - name: Restore project library
         run: Rscript -e 'install.packages("renv"); renv::restore()'
