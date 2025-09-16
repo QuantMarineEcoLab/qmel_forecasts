@@ -23,14 +23,18 @@ jobs:
         with:
           r-version: "4.2"
           
-      - name: Install system libraries
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libudunits2-dev \
             libnetcdf-dev \
             libcurl4-openssl-dev \
-            libsecret-1-dev
+            libsecret-1-dev \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev
+
 
       - name: Restore project library
         run: Rscript -e 'install.packages("renv"); renv::restore()'
