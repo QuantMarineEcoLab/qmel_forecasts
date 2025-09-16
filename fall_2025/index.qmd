@@ -3,3 +3,17 @@ title: "Fall 2025 Forecasting Workshop"
 format: html
 ---
 
+| Date | Chapter | Discussion Leader | Note Link |
+|------------------|------------------|------------------|------------------|
+| 09/02/2025 | 1 - Getting Started | Drew | [Initial meeting and chapter 1 notes](meeting_notes/chapter1_Drew.qmd) |
+| 09/16/2025 | 2, 3 - Graphics and Decomposition | Jannine |  |
+| 09/30/2025 | 5 - Forecast Toolbox | Kaila |  |
+| 10/14/2025 | 7 - Time Series Regression Models | Miguel |  |
+| 10/28/2025 | 8 - Exponential Smoothing | Drew |  |
+| 11/11/2025 | 9 - ARIMA |  |  |
+| 11/25/2025 | 10 - Dynamic Regression Models | Selina |  |
+| 12/9/2025 | Schedule Spring Work | Jannine |  |
+
+: QMEL Fall 2025 Forecasting Course Schedule
+
+**Discussion Leader Role:** Commit to reading the chapter in depth, give a bit of summary or show a slide or two / come with some discussion, question/answer at the start of meeting, think about applying this to your own data/data examples. The rest of the meeting will be spent working through exercises together and discussing

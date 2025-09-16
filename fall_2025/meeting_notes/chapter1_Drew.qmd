@@ -1,0 +1,14 @@
+---
+title: "chapter1_Drew"
+format: html
+---
+
+# Chapter 1: Getting Started with Forecasting
+
+* Gingko idea – for end of the meetings? 
+
+* First 10 min – Q&A, and then go into running htrough exercises 
+
+* For the future: NERRS/NEON dataset 
+ 
+* Should we schedule out a NERRS forecast hackathon with the lab?

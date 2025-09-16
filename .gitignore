@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+
+/.quarto/
+/projects/gingko/data/era_data

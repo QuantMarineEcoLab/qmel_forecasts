@@ -1,0 +1,23 @@
+[
+  {
+    "objectID": "projects/gingko/index.html",
+    "href": "projects/gingko/index.html",
+    "title": "Gingko Forecasting Project",
+    "section": "",
+    "text": "This page contains data and scripts for QMEL forecasting of the UNH Gingko drop date!\nAs of 09/16/2025, this is not organized from the last time Drew played around with the gingko data."
+  },
+  {
+    "objectID": "projects/gingko/index.html#script",
+    "href": "projects/gingko/index.html#script",
+    "title": "Gingko Forecasting Project",
+    "section": "Script",
+    "text": "Script\n\nreadRenviron(\".Renviron\")\n\nWarning in readRenviron(\".Renviron\"): file '.Renviron' cannot be opened for\nreading\n\nlibrary(fpp3)\nlibrary(openmeteo)\nlibrary(fabletools)\nlibrary(here)\nlibrary(tidyverse)\n\ngingko_dat&lt;-read.csv(\"data/gingko.csv\")\n          \n\n\ngingko&lt;-tsibble(gingko_dat,index=Year)\ngingko&lt;-tsibble::fill_gaps(gingko)\n\n#plot\ngingko |&gt;\n  autoplot(Julian.day) +\n  labs(y=\"Julian Day\",x=\"Year\")+\n  stat_smooth(method=\"lm\")\n\nWarning: Removed 4 rows containing non-finite outside the scale range\n(`stat_smooth()`).\n\n\n\n\n\n\n\n\ngingko |&gt;\n  gg_lag(Julian.day,geom=\"point\")\n\nWarning: Removed 4 rows containing missing values (gg_lag).\n\n\n\n\n\n\n\n\ngingko |&gt;\n  ACF(Julian.day,lag_max = 47) |&gt;\n  autoplot()"
+  },
+  {
+    "objectID": "projects/index.html",
+    "href": "projects/index.html",
+    "title": "QMEL Forecasting Group Projects",
+    "section": "",
+    "text": "Fall 2025: Gingko Forecasting"
+  }
+]
