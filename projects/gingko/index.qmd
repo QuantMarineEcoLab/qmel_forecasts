@@ -158,7 +158,6 @@ library(keyring)
 library(abind)
 library(lubridate)
 library(tidync)
-library(microctools)
 
 #my tokens are secret - you will need to get your own, see vignette for mcera5
 vignette("mcera5_vignette", package = "mcera5")
