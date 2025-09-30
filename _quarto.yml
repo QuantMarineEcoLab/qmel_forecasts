@@ -12,7 +12,6 @@ website:
       - href: projects/
         text: projects
 
-
 format:
   html:
     theme: cosmo
