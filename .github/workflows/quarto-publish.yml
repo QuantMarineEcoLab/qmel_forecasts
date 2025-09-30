@@ -24,7 +24,7 @@ jobs:
           r-version: "4.4"
           
       - name: Install feasts and fabletools
-        run: Rscript -e 'install.packages(c("fabletools","feasts")'
+        run: Rscript -e 'install.packages(c("fabletools","feasts"))'
 
 
           
