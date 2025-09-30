@@ -1,0 +1,389 @@
+---
+title: "Forecasting: Chapter 5 Notes"
+format: 
+  revealjs:
+    auto-stretch: false
+editor: visual
+execute:
+  echo: true
+engine: rstudio
+---
+
+```{r}
+#| echo: false
+#| output: false
+
+library(tsibbledata)
+library(ggplot2)
+library(ggfortify)
+library(feasts)
+library(dplyr)
+library(readr)
+library(tsibble)
+library(tidyr)
+library(fable)
+library(lubridate)
+library(sf)
+library(cowplot)
+library(rnaturalearth)
+library(terra)
+library(tidyterra)
+library(ragg)
+```
+
+# Overview: *The forecaster's toolbox*
+
+## What did we learn from Chapter 5❓ {.smaller}
+
+-   A basic forecasting workflow (5.1)
+
+-   Simple modeling techniques (5.2)
+
+-   Methods for evaluating residuals from fitted values (5.3-5.4)
+
+-   Some prediction interval techniques (5.5)
+
+-   Methods for evaluating forecast accuracy (5.6-5.10)
+
+We'll review the content by section (starting with 5.1) and discuss relevant exercises as we go.
+
+*Big shoutout to Jannine for leading Week 2 and inspiring this layout \<3*
+
+## Data for exercises {.scrollable .smaller}
+
+For all exercises in these notes, I'll use a time series of fitted and forecasted sea surface temperatures for Monterey Bay National Marine Sanctuary.
+
+```{r, warning = FALSE}
+#| echo: false
+#| fig-cap: Monterey Bay National Marine Sanctuary
+
+### Plot the study area
+
+# Gather geographic data
+us <- ne_countries(continent="north america", 
+                   returnclass="sf", scale="medium")
+mb <- st_read("/Users/kailafrazer/Desktop/MCS/Marine Cold-spell Manuscript/PLOS Submission 2 GitHub/NMS Shapefiles/mb/mbnms_py.shp", 
+              quiet = T)
+
+# Set a theme
+theme <- theme_set(theme_classic())
+theme_set(theme(
+  panel.background=element_rect(fill="lightblue")))
+
+# Plot
+ggplot()+
+  geom_sf(data=us, aes(fill="Land")) +
+  geom_sf(data=mb, aes(fill="Monterey Bay"))+
+  coord_sf(xlim=c(-118,-130), ylim=c(32,44))+
+  scale_fill_manual(values=c("Land" = "white", 
+                             "Monterey Bay"="#21918c")) +
+  xlab("Longitude") + ylab("Latitude")+
+  theme(axis.text.x=element_text(margin=margin(t=5)), 
+        legend.background = element_rect(color="black"))+
+  guides(linetype = guide_legend(override.aes = list(fill = "white")))
+```
+
+```{r, warning = FALSE}
+#| fig-cap: 120 years of sea surface temperature modeled for Monterey Bay National Marine Sanctuary by the Geophysical Fluid Dynamics Laboratory
+
+# Access data - I'm happy to share on request
+mb = readRDS("/Users/kailafrazer/Desktop/MCS/Honors/Cold-spell Detection/example baseline - SB and NB GFDL MB mean clim.rds") %>%
+  select(date_flag, mean_value) %>% 
+  tsibble(index = date_flag) %>% 
+  index_by(month = ~ yearmonth(.)) %>% 
+  summarize(monthly_sst = mean(mean_value))
+# Reset themes
+theme <- theme_set(theme_classic())
+# Plot
+autoplot(mb, monthly_sst) + 
+  annotate("rect", fill = "lightblue", alpha = 0.5, 
+        xmin = yearmonth(371), xmax = yearmonth(731),
+        ymin = -Inf, ymax = Inf)
+# Slice the Monterey Bay data to work with for the rest of the .qmd
+mb = slice(mb, 252:731)
+```
+
+Takeaways about the practice data I'm using:
+
+-   I'm modeling a model, hehe. I think this is very bad practice :)
+
+-   There is a very long-term trend in the data which won't be reflected as strongly in the subset of data I'll use, but I wanted to be able to visually parse the monthly cycles and it's hard to do that when looking at 120 years.
+
+# 5.1: *A tidy forecasting workflow* {.smaller}
+
+![Textbook illustration of a forecasting workflow](Forecasting_Chapter5_Notes_files/workflow-1.png){fig-align="left"}
+
+# 5.2: *Some simple forecasting methods*
+
+## Simple forecasting methods: {.smaller}
+
+-   [Average method]{.underline} forecasts all future values as the historical mean value.
+
+-   [Naive method]{.underline} forecasts all future values as the most recent value.
+
+-   [Seasonal naive method]{.underline} forecasts all future values as the mean historical value for the given season.
+
+-   [Drift method]{.underline} calculates a linear "drift" function with a slope equal to the difference between the first observation and the most recent observation. The line defined by the drift function is the forecast.
+
+## Relevant example: {.scrollable .smaller}
+
+Getting a little ahead of ourselves here but I think it's good to visualize these basic models and hard to do so without actual forecasting!
+
+```{r, warning = FALSE}
+#| fig-cap: Three basic models forecasted for about eight years of sea surface temperature in Monterey Bay
+
+# Try different models on Monterey Bay data
+mb_simple_models = mb %>% 
+  # Leave out 100 points for testing data (the sliced data includes 479 observations)
+  slice(1:379) %>% 
+  # Build seasonal naive, naive, and drift models
+  model(Seasonal_Naive = SNAIVE(monthly_sst), 
+        Naive = NAIVE(monthly_sst), 
+        Drift = RW(monthly_sst ~ drift()))
+# Forecast
+mb_simple_forecasts = mb_simple_models %>% 
+  forecast(h = 100)
+# Plot
+autoplot(mb, monthly_sst) + 
+  autolayer(mb_simple_forecasts, level = NULL)
+```
+
+# 5.3: *Fitted values and residuals*
+
+## 5.3 Definitions: {.smaller}
+
+-   I think of [fitted values]{.underline} as forecasts for time stamps for which we *already have observations*. Is this an accurate definition❓
+
+-   [Residuals]{.underline} are the differences between observed and fitted values for the same time stamp.
+
+## 5.3 Relevant example: {.scrollable .smaller}
+
+```{r, warning = FALSE}
+#| tbl-cap: Residuals for a seasonal naive forecast for about eight years of Monterey Bay data
+
+# Create a table of residuals (excluding innovation residuals since we don't get to those until the next section)
+mb_snaive_resids = mb_simple_models[1] %>% 
+  augment() %>% select(-.innov)
+# Print out residuals (excluding the first few which are NAs)
+mb_snaive_resids[13:379,]
+```
+
+# 5.4: *Residual diagnostics*
+
+## 5.4 Definitions: {.smaller}
+
+-   [Innovation residuals]{.underline} are residuals of *transformed* forecasts
+
+#### Evaluating residuals:
+
+-   First and foremost, residuals should be [uncorrelated]{.underline} with a [zero mean]{.underline}. It's best for them also to have [constant variance]{.underline} and a [normal distribution.]{.underline} Why are these things important❓
+
+-   We learned about two "Portmanteau" tests to measure autocorrelation of residuals:
+
+    -   [Box-pierce tests]{.underline} (Q)
+
+    -   [Ljung-box tests]{.underline} (Q\*)
+
+    -   For both tests, we'll need to set values of l and k
+
+        -   l should be 10 for nonseasonal data or 2m for seasonal data (where m is the period of seasonality)
+
+        -   k is the number of parameters in the model
+
+## 5.4 Relevant example: {.scrollable .smaller}
+
+```{r, warning = FALSE}
+#| tbl-cap: Residuals for seasonal naive fitted values on the Monterey Bay data
+
+# Run a Box-Pierce test on the Monterey Bay seasonal naive model
+mb_snaive_fitted = mb_simple_models[1] %>% 
+  fitted() # Get the fitted values
+# Plot the data and fitted values so we can get a visual sense for the narrative here
+autoplot(mb) + autolayer(mb_snaive_fitted, level = NULL, color = "lightblue")
+# Plot residuals
+gg_tsresiduals(mb_simple_models[1]) + 
+  ggtitle("Residual diagnostics for the seasonal 
+          naive fitted values on the Monterey Bay data")
+# Collect Box Pierce test value
+mb_simple_models[1] %>% augment() %>% 
+  features(.innov, box_pierce, l=8) # I set l equal to six because the seasonal cycle is 4
+```
+
+What can we learn from this Box-Pierce test? Did I call it correctly (I mean actually this is a question I have)❓
+
+# 5.5: *Distributional forecasts and prediction intervals*
+
+## 5.5 Definitions: {.smaller}
+
+-   [Prediction interval]{.underline} is an interval around in which we expect to observe actual values. The size of the prediction interval is determined by what percent of possible outcomes you'd like to cover
+
+    -   [One-step prediction intervals]{.underline} are estimated using the standard deviation from residuals
+
+    -   [Bootstrapped prediction intervals]{.underline} are appropriate when we can't assume that the residuals are normally distributed. Calculated step-by-step by defining the forecast error
+
+    -   Can anyone articulate the difference between one-step and bootstrapped prediction intervals better than me❓
+
+## 5.5 Relevant example: {.scrollable .smaller}
+
+```{r, warning = FALSE}
+#| fig-cap: 80% prediction interval for a drift model forecast of Monterey Bay data
+
+# Select the drift forecasts
+mb_drift_forecast = filter(mb_simple_forecasts, .model == "Drift")
+# Plot with a prediction interval
+autoplot(mb, monthly_sst) + 
+  autolayer(mb_drift_forecast, level = 80, alpha = 0.25)
+```
+
+# 5.6: *Forecasting using transformations*
+
+## 5.6 Definitions: {.smaller}
+
+-   [Back-transforming]{.underline} is the process of reverting forecasts to the original scale of the data (if the data was transformed before forecasting).
+
+-   [Bias adjustment]{.underline} is required when back-transforming forecasts because back-transforming yields the median rather than the mean (this is called the forecast bias). Why does this happen❓
+
+# 5.7: *Forecasting with decomposition*
+
+## 5.7 Concept: {.smaller}
+
+[Forecasting with additive decomposition]{.underline} can be done simply by forecasting each component separately and then adding them together to generate the recomposed forecast.
+
+## 5.7 Relevant example: {.scrollable .smaller}
+
+```{r, warning = FALSE}
+#| fig-cap: STL decomposition model forecast (red) compared to seasonal naive forecast (red) for the Monterey Bay data
+
+# The textbook authors recommend this nested series of functions
+mb_decomp_forecast = mb[1:379,] %>% 
+  # "model()" defines a model
+  # "stlf =" stands for stl forecasting
+  # "decomposition_model()" defines a type of decomposed model
+  model(stlf = decomposition_model(
+    # "STL()" is the method of decomposition we learned during last session which separates a long-term trend and a seasonal trend from the data
+    STL(monthly_sst ~ trend(), robust = TRUE), 
+    # "STL()" and "NAIVE()" here model two parts of the deomposition
+    NAIVE(season_adjust))) %>% 
+  # I think the "stlf =" is forecasting the two parts of the model together automatically for us
+  forecast(h = 100)
+
+# For comparison, let's make a basic seasonal naive model
+mb_snaive_forecast = mb_simple_models[1] %>% 
+  forecast(h = 100)
+
+# Plot the decomposed and recomposed model in red and the seasonal naive model in blue
+autoplot(mb, monthly_sst) + 
+  autolayer(mb_snaive_forecast, level = NULL, color = "blue") +
+  autolayer(mb_decomp_forecast, level = NULL, color = "red")
+```
+
+What's going on here❓
+
+[Note on code:]{.underline} To perform an STL decomposition on a time series, we can use either feasts::STL() or stats::stl(). feasts::STL() is recommended by the textbook since it's part of the package system the textbook authors built but, in my opinion, it's pretty inflexible and opaque. That said, I'll use feasts::STL() for the example below since it works with the decomposition_model() parameter the authors ask us to call in the exercises.
+
+# 5.8: *Evaluating point forecast accuracy*
+
+## 5.8 Definitions: {.scrollable .smaller}
+
+-   [Training and testing sets]{.underline} are slices of the data used separately to build a model and test its performance.
+
+-   [Forecast errors]{.underline} are essentially residuals calculated over the interval of the testing data. They're not technically residuals because they don't describe how the model differs from data on which it was trained; rather, they describe how the model performs in novel situations.
+
+-   Forecast errors are often [scale-dependent]{.underline}, which means they're calculated on the scale of the data and can't be compared across datasets.
+
+-   Some tests of forecast error include:
+
+    -   [Mean absolute error]{.underline} (MAE)
+
+    -   [Root mean squared error]{.underline} (RMSE)
+
+    -   [Percent error]{.underline} is unit-free, so it's useful for comparing forecast errors between datasets
+
+    -   [Scaled errors]{.underline} are an alternative to percent error scaled from the mean absolute error fo the training data. Scaled errors are less than one if the forecast is better than a one-step naive method (we hope it is)!
+
+    -   What are some of the pro's and con's of these tests❓
+
+## 5.8 Relevant Example {.scrollable .smaller}
+
+```{r, warning = FALSE}
+
+# Compare accuracy scores for forecast errors from the two forecasts generated in the last code chunk
+accuracy(mb_decomp_forecast, mb)
+accuracy(mb_snaive_forecast, mb)
+```
+
+Which model performs better here❓
+
+# 5.9: *Evaluating distributional forecast accuracy*
+
+## 5.9 Definitions: {.smaller}
+
+-   [Quantiles]{.underline} are values under which some percent of observations should fall and over which the rest of the observations should fall.
+
+-   [Pinball loss function]{.underline} gives the likelihood that a value would be observed (I think). This can be interpreted like absolute error... let's chat about this more in the example.
+
+-   [Winkler score]{.underline} describes the accuracy of the prediction interval as the length of the prediction interval plus a penalty if an observation falls outside it.
+
+-   [Continuous ranked probability score]{.underline} (CRPS) evaluates forecast distributions with an average of the quantile scores (lower is better)
+
+-   [Scale-free comparisons]{.underline} compares models. The output is a proportion of how many predictions one model predicted that another didn't. If you don't have two models to compare, skill_score() will automatically compare your model to the naive or seasonal naive model.
+
+```{r, warning = FALSE}
+
+# Plot with a prediction interval
+autoplot(mb, monthly_sst) + 
+  autolayer(mb_drift_forecast, level = 80, alpha = 0.25)
+
+# Let's look at some distributional accuracy scores
+mb_simple_forecasts %>% 
+  accuracy(mb, list(qs = quantile_score, 
+                    winkler = winkler_score, 
+                    crps = CRPS, 
+                    skill = skill_score(CRPS)), 
+           probs = 0.2, level = 80)
+
+```
+
+Alright guys what the heck is going on here❓❓❓
+
+# 5.10: *Time series cross-validation*
+
+## 5.10 Definition: {.smaller}
+
+-   [Rolling forecasts]{.underline} draw from different data sources for training and testing datasets. I found the figure in the textbook helpful to understand this method
+
+![](Forecasting_Chapter5_Notes_files/cv1-1.png)
+
+# 5.11: *Exercises*
+
+I have a few exercises I'd like to talk about here but we can also explore others.
+
+## Exercise 3 {.scrollable .smaller}
+
+```{r, warning = FALSE}
+
+## Exercise 3
+# Access Australian beer data
+recent_prod = aus_production %>% filter(year(Quarter) >= 1992)
+# Fit a model
+fit = recent_prod %>% model(SNAIVE(Beer))
+# Forecast
+fit %>% forecast() %>% autoplot(recent_prod) + 
+  ggtitle("Seasonal naive forecast of Australian beer production")
+fit %>% gg_tsresiduals() + # Check if the residuals look like white noise
+  ggtitle("Residuals for seasonal naive forecast of Australian beer production")
+```
+
+Do these residuals look like white noise to us❓
+
+## Exercise 6❓ {.smaller}
+
+a\. Good forecast methods should have normally distributed residuals.
+
+b\. A model with small residuals will give good forecasts.
+
+c\. The best measure of forecast accuracy is MAPE.
+
+d\. If your model doesn’t forecast well, you should make it more complicated.
+
+e\. Always choose the model with the best forecast accuracy as measured on the test set.
