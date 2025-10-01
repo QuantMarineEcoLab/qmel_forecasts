@@ -62,7 +62,9 @@ For all exercises in these notes, I'll use a time series of fitted and forecaste
 # Gather geographic data
 us <- ne_countries(continent="north america", 
                    returnclass="sf", scale="medium")
-#mb <- st_read("/Users/kailafrazer/Desktop/MCS/Marine Cold-spell Manuscript/PLOS Submission 2 GitHub/NMS Shapefiles/mb/mbnms_py.shp", #              quiet = T)
+
+mb <- st_read("/Data/mbnms_py.shp", # Assumes GitHub repo as working directory
+              quiet = T)
 
 # Set a theme
 theme <- theme_set(theme_classic())
@@ -86,7 +88,7 @@ ggplot()+
 #| fig-cap: 120 years of sea surface temperature modeled for Monterey Bay National Marine Sanctuary by the Geophysical Fluid Dynamics Laboratory
 
 # Access data - I'm happy to share on request
-mb = readRDS("/Users/kailafrazer/Desktop/MCS/Honors/Cold-spell Detection/example baseline - SB and NB GFDL MB mean clim.rds") %>%
+mb = readRDS("/Data/Monterey Bay Data for Chapter 5 Exercises") %>% # Again assumes GitHub repo working directory
   select(date_flag, mean_value) %>% 
   tsibble(index = date_flag) %>% 
   index_by(month = ~ yearmonth(.)) %>% 
