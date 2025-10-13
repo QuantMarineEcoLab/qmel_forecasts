@@ -10,6 +10,7 @@ editor_options:
 # 1. Chapter 2 - Time serires graphics (Notes)
 
 Time series - a list of numbers and information about that time those numbers were recorded
+
 ```{r}
 library(tidyverse)
 library(tsibble)
@@ -70,10 +71,10 @@ a10 <- PBS |>
 
 ```
 
-
 ```{r}
 # Most times we are reading our data into R, we can convert this data into a tsibble object as well.
 prison <- readr::read_csv("https://OTexts.com/fpp3/extrafiles/prison_population.csv")
+write.csv("Data/prison.csv")
 
 prison.tib <- prison |> 
   mutate(Quarter = yearquarter(Date)) |> 
@@ -87,11 +88,13 @@ prison.tib # 64 differnt data sets
 ```
 
 Seasonal Periods
+
 ```{r}
 
 ```
 
 Time Plots
+
 ```{r}
 ansett
 
@@ -115,18 +118,18 @@ autoplot(a10, Cost)+
 
 ```
 
-
 Important Definitions
 
 Trend - A long term increase of decrease in the data. This does not have to be linear, it can sometimes "change directions".
 
-Seasonal - A seasonal pattern  occurs when a time series is affected by seasonal factors such as the time of year or the day of the week. Seasonality is always of a fixed and known period. 
+Seasonal - A seasonal pattern occurs when a time series is affected by seasonal factors such as the time of year or the day of the week. Seasonality is always of a fixed and known period.
 
 Cyclic - A cycle occurs when the data exhibits rises and falls that are not of a fixed frequency.
 
 In general, the average length of cycles is longer than the length of a seasonal pattern and the magnitudes of cycles tend to be more variable than the magnitudes of seasonal patterns.
 
 Seasonal Plots
+
 ```{r}
 a10
 
@@ -135,7 +138,6 @@ a10 |>
   labs(y = "$ (millions)",
        title = "Seasonal plot: Antidiabetic drug sales")
 ```
-
 
 Multiple seasonal periods
 
@@ -155,6 +157,7 @@ vic_elec |> gg_season(Demand, period = "year") +
 ```
 
 Seasonal sub series plots
+
 ```{r}
 # Data from each season are collected together in separate mini time plots
 # Plots each season separately
@@ -192,9 +195,11 @@ holidays |>
        title = "Australian domestic holidays")
 
 ```
+
 Scatterplots
 
 Sometimes we are intereted in relationships between multiple time series
+
 ```{r}
 vic_elec |>
   filter(year(Time) == 2014) |>
@@ -205,7 +210,8 @@ vic_elec |>
 
 # 2. Chapter 2 - Exercises
 
-1. Explore the following four time series: Bricks from aus_production, Lynx from pelt, Close from gafa_stock, Demand from vic_elec.
+1.  Explore the following four time series: Bricks from aus_production, Lynx from pelt, Close from gafa_stock, Demand from vic_elec.
+
 ```{r}
 
 aus_production # Looks to be quarterly data
@@ -229,7 +235,8 @@ vic_elec |>
 
 ```
 
-2. Use filter() to find what days corresponded to the peak closing price for each of the four stocks in gafa_stock.
+2.  Use filter() to find what days corresponded to the peak closing price for each of the four stocks in gafa_stock.
+
 ```{r}
 gafa_stock<-gafa_stock # daily data that skips weekends?
 
@@ -247,10 +254,10 @@ gafa_stock
  
 ```
 
-3. 
+3.  
+
 ```{r}
-library(here)
-tute1 <- readr::read_csv(here("Data", "tute1.csv"))
+tute1 <- readr::read_csv("Data/tute1.csv")
 View(tute1)
 
 mytimeseries <- tute1 |>
@@ -264,7 +271,8 @@ mytimeseries |>
   facet_grid(name ~ ., scales = "free_y")
 ```
 
-4. 
+4.  
+
 ```{r}
 library(USgas)
 
@@ -279,11 +287,12 @@ us_total |>
   geom_line()
 ```
 
-5. 
+5.  
+
 ```{r}
 tourism
 
-tourism2 <- readxl::read_excel(here("Data", "tourism.xlsx"))
+tourism2 <- readxl::read_excel(("Data/tourism.xlsx"))
 
 # Create a tsibble which is identical to the tourism tsibble from the tsibble package.
 tourism2 <- tourism2 |> 
@@ -320,7 +329,8 @@ state_tourism
   
 ```
 
-6. The aus_arrivals data set comprises quarterly international arrivals to Australia from Japan, New Zealand, UK and the US.
+6.  The aus_arrivals data set comprises quarterly international arrivals to Australia from Japan, New Zealand, UK and the US.
+
 ```{r}
 # Use autoplot(), gg_season() and gg_subseries() to compare the differences between the arrivals from these four countries.
 
@@ -339,7 +349,8 @@ aus_arrivals |>
 
 ```
 
-7. Monthly Australian retail data is provided in aus_retail. Select one of the time series as follows (but choose your own seed value):
+7.  Monthly Australian retail data is provided in aus_retail. Select one of the time series as follows (but choose your own seed value):
+
 ```{r}
 set.seed(12345678)
 myseries <- aus_retail |>
@@ -369,7 +380,9 @@ myseries |>
 # Just annual cycles?
 
 ```
-8. Using graphing functions
+
+8.  Using graphing functions
+
 ```{r}
 # Exploring US Employment Data
 us_employment
@@ -433,12 +446,12 @@ pelt |>
 # Follows similar pattern to hares, by the acf values are much higher
 ```
 
-
-9. The following time plots and ACF plots correspond to four different time series. Your task is to match each time plot in the first row with one of the ACF plots in the second row.
+9.  The following time plots and ACF plots correspond to four different time series. Your task is to match each time plot in the first row with one of the ACF plots in the second row.
 
 3 - D, 1 - B, 2 - A, 4 - C
 
 10. The aus_livestock data contains the monthly total number of pigs slaughtered in Victoria, Australia, from Jul 1972 to Dec 2018. Use filter() to extract pig slaughters in Victoria between 1990 and 1995. Use autoplot() and ACF() for this data. How do they differ from white noise? If a longer period of data is used, what difference does it make to the ACF?
+
 ```{r}
 aus_livestock
 
@@ -466,7 +479,9 @@ victoria_pigs |>
 # This series is different from white noise in that may of the spike fall outside of the confidence band. 
   
 ```
+
 11. 
+
 ```{r}
 dgoog <- gafa_stock |>
   filter(Symbol == "GOOG", year(Date) >= 2018) |>
@@ -490,13 +505,15 @@ dgoog |>
 ```
 
 # 3. Chapter 3 -Time series decomposition (Notes)
+
 ```{r}
 
 ```
 
 # 4. Chapter 3 - Exercises
 
-1. Consider the GDP information in global_economy. Plot the GDP per capita for each country over time. Which country has the highest GDP per capita? How has this changed over time?
+1.  Consider the GDP information in global_economy. Plot the GDP per capita for each country over time. Which country has the highest GDP per capita? How has this changed over time?
+
 ```{r}
 global_economy
 
@@ -506,7 +523,8 @@ global_economy |>
   theme(legend.position = "none")
 ```
 
-2. For each of the following series, make a graph of the data. If transforming seems appropriate, do so and describe the effect.
+2.  For each of the following series, make a graph of the data. If transforming seems appropriate, do so and describe the effect.
+
 ```{r}
 
 # United States GDP from global_economy.
@@ -545,7 +563,8 @@ aus_production |>
 
 ```
 
-3. Why is a Box-Cox transformation unhelpful for the canadian_gas data?
+3.  Why is a Box-Cox transformation unhelpful for the canadian_gas data?
+
 ```{r}
 aus_production |> 
   autoplot(Gas)
@@ -556,7 +575,7 @@ canadian_gas |>
 
 ```
 
-4. What Box-Cox transformation would you select for your retail data (from Exercise 7 in Section 2.10)?
+4.  What Box-Cox transformation would you select for your retail data (from Exercise 7 in Section 2.10)?
 
 ```{r}
 myseries |> 
@@ -593,7 +612,8 @@ myseries |>
   autoplot(turnover_lambdaneg1)
 ```
 
-5. For the following series, find an appropriate Box-Cox transformation in order to stabilise the variance. Tobacco from aus_production, Economy class passengers between Melbourne and Sydney from ansett, and Pedestrian counts at Southern Cross Station from pedestrian.
+5.  For the following series, find an appropriate Box-Cox transformation in order to stabilise the variance. Tobacco from aus_production, Economy class passengers between Melbourne and Sydney from ansett, and Pedestrian counts at Southern Cross Station from pedestrian.
+
 ```{r}
 aus_production |> 
    autoplot(Tobacco)
@@ -680,7 +700,8 @@ pedestrian |>
   labs(y = "", title = latex2exp::TeX(paste0("Transformed Count with $\\lambda$ = ", round(lambda,2)))) 
 ```
 
-6. Show that a 3×5 MA is equivalent to a 7-term weighted moving average with weights of 0.067, 0.133, 0.200, 0.200, 0.200, 0.133, and 0.067.
+6.  Show that a 3×5 MA is equivalent to a 7-term weighted moving average with weights of 0.067, 0.133, 0.200, 0.200, 0.200, 0.133, and 0.067.
+
 ```{r}
 # In notebook
 
@@ -706,7 +727,8 @@ aus_exports |>
 
 ```
 
-7. Consider the last five years of the Gas data from aus_production.
+7.  Consider the last five years of the Gas data from aus_production.
+
 ```{r}
 gas <- tail(aus_production, 5*4) |> select(Gas)
 
@@ -772,7 +794,8 @@ gas |>
 
 ```
 
-8. Recall your retail time series data (from Exercise 7 in Section 2.10). Decompose the series using X-11. Does it reveal any outliers, or unusual features that you had not noticed previously?
+8.  Recall your retail time series data (from Exercise 7 in Section 2.10). Decompose the series using X-11. Does it reveal any outliers, or unusual features that you had not noticed previously?
+
 ```{r}
 library("seasonal")
 x11_dcmp_myseries <- myseries |>
@@ -785,11 +808,16 @@ autoplot(x11_dcmp_myseries) +
 # There are some outliers before Jan 2000 that perhaps I would not have noticed with out this decomposition
 ```
 
-9. Figures 3.19 and 3.20 show the result of decomposing the number of persons in the civilian labour force in Australia each month from February 1978 to August 1995.
+9.  Figures 3.19 and 3.20 show the result of decomposing the number of persons in the civilian labour force in Australia each month from February 1978 to August 1995.
 
-a. There is an obvious increasing trend. Seasonality exists but at a very small scale when compared to other components of the time series. Seasonal trends are inconsistent. There are a few outliers following Jan 1990, due to the recession.
+<!-- -->
+
+a.  There is an obvious increasing trend. Seasonality exists but at a very small scale when compared to other components of the time series. Seasonal trends are inconsistent. There are a few outliers following Jan 1990, due to the recession.
+
+<!-- -->
 
 10. This exercise uses the canadian_gas data (monthly Canadian gas production in billions of cubic metres, January 1960 – February 2005).
+
 ```{r}
 canadian_gas
 
@@ -819,5 +847,3 @@ canadian_gas |>
 
 
 ```
-
-

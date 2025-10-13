@@ -57,13 +57,14 @@ For all exercises in these notes, I'll use a time series of fitted and forecaste
 #| echo: false
 #| fig-cap: Monterey Bay National Marine Sanctuary
 
+readRenviron(".Renviron")
+
 ### Plot the study area
 
 # Gather geographic data
 us <- ne_countries(continent="north america", 
                    returnclass="sf", scale="medium")
-
-mb <- st_read("/Data/mbnms_py.shp", # Assumes GitHub repo as working directory
+mb <- st_read("Data/mbnms_py.shp", # Assumes GitHub repo as working directory
               quiet = T)
 
 # Set a theme
@@ -88,7 +89,7 @@ ggplot()+
 #| fig-cap: 120 years of sea surface temperature modeled for Monterey Bay National Marine Sanctuary by the Geophysical Fluid Dynamics Laboratory
 
 # Access data - I'm happy to share on request
-mb = readRDS("/Data/Monterey Bay Data for Chapter 5 Exercises") %>% # Again assumes GitHub repo working directory
+mb = readRDS("Data/Monterey Bay Data for Chapter 5 Exercises") %>% # Again assumes GitHub repo working directory
   select(date_flag, mean_value) %>% 
   tsibble(index = date_flag) %>% 
   index_by(month = ~ yearmonth(.)) %>% 
