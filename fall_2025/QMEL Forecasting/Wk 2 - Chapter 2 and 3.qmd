@@ -66,7 +66,7 @@ This data can be found here: https://sbclter.msi.ucsb.edu/data/catalog/package/?
     library(fpp3)
 
     # Loading data
-    sbc_temp<-read_csv("Data/SBC_LTER_Bottom_temp_all_years_20250128.csv") |> 
+    sbc_temp<-read_csv("C:/Users/drewv/OneDrive - USNH/Documents/Teaching/forecasting/Bottom_temp_all_years_20250128.csv") |> 
       filter(SITE %in% c("AQUE")) |> 
       select(SITE, DATE_LOCAL, TIME_LOCAL, TEMP_C) 
     

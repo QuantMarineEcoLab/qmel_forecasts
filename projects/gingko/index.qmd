@@ -7,9 +7,11 @@ This page contains data and scripts for QMEL forecasting of the UNH Gingko drop 
 
 As of 09/16/2025, this is not organized from the last time Drew played around with the gingko data.
 
-## Script
+## Gingko Leaf Drop Data
 
-```{r, message=F}
+Dr. Seria Frey (UNH NRES) has been [continuing data collection](https://www.nhpr.org/environment/2023-11-17/this-year-a-ginkgo-tree-at-the-university-of-new-hampshire-lost-its-leaves-later-than-ever) of the UNH Gingko tree leaf drop date, a dataset that has been collected more or less continuously since 1977. 
+
+```{r, message=F,warning=F}
 readRenviron(".Renviron")
 
 library(fpp3)
@@ -17,6 +19,7 @@ library(openmeteo)
 library(fabletools)
 library(here)
 library(tidyverse)
+library(leaflet)
 
 gingko_dat<-read.csv("data/gingko.csv")
           
@@ -29,7 +32,8 @@ gingko<-tsibble::fill_gaps(gingko)
 gingko |>
   autoplot(Julian.day) +
   labs(y="Julian Day",x="Year")+
-  stat_smooth(method="lm")
+  stat_smooth(method="lm") +
+  geom_point()
 
 gingko |>
   gg_lag(Julian.day,geom="point")
@@ -40,28 +44,60 @@ gingko |>
 
 ```
 
-# Let's get temp, precip, and wind speed data  with era5
+# Let's get temp, precip, and wind speed data with openmeteo
 
-```{r,message=F}
+The openmeteo package uses an API to query the Open Meteo dataset, with reanalysis data from ERA downscaled models. Therefore, important to note that these are MODELED data, not OBSERVATIONS. 
+
+```{r,message=F,eval=T,warning=F}
 
 gingko_coords<-c(43.136806, -70.934278)
-#unsilence to create nh_hist from scratch
+#unsilence to create nh_hist_day from scratch
 
-#nh_hist<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
-#                hourly=c("soil_temperature_0_to_7cm"))
-#nh_hist_daily_soil_sum<-nh_hist%>%
-#  group_by()%>%
-#  summarise(hourly_soil_temperature_0_to_7cm)
+#insert interactive map with photo of gingko, gingko.png
+leaflet() %>%
+  addTiles() %>%
+  addMarkers(lng=-70.934278,lat=43.136806,popup=
+               paste0("<img src='https://npr.brightspotcdn.com/dims4/default/9e3bfd4/2147483647/strip/true/crop/1488x1116+0+0/resize/1760x1320!/format/webp/quality/90/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fe6%2F3a%2F3b3e8a6c42c8818ef0b91846a787%2Fginkgo-tree-and-leaves-on-ground-2.png' width='150' height='150'><br>",
+                      "UNH Gingko Tree"))
+```
 
-#nh_hist_day<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
-#               daily=c("temperature_2m_min","precipitation_sum","windspeed_10m_max"))
-#write.csv(nh_hist_day,"data/nh_hist.csv")
+From Openmeteo, we will extract 1) Minimum daily temperature at 2m, 2) Maximum daily temperature at 2m, 3) Daily precipitation, 4) Maximum daily windspeed at 10m,  5) sunrise and sunset,  6) Soil temperature from 0-7cm depth (hourly), and 7) Soil temperature from 28-100cm depth (hourly). We could get hourly temperature and precip, for example, if we think that accumulation is more important than threshold values There are many other variables available, see the [Open Meteo documentation](https://open-meteo.com/en/docs) for more information.
+
+```{r,message=F,eval=F,warning=F}
+
+nh_hist_hourly<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
+                hourly=c("soil_temperature_0_to_7cm","soil_temperature_28_to_100cm"))
+
+#get daily summaries of soil temp
+nh_hist_daily_soil_sum<-nh_hist_hourly%>%
+  mutate(date = as.Date(datetime)) %>% 
+  group_by(date)%>%
+  summarise(shallow_soil_daily_mean=mean(hourly_soil_temperature_0_to_7cm),
+            deep_soil_daily_mean=mean(hourly_soil_temperature_28_to_100cm))%>%
+  ungroup()
+
+nh_hist_day<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
+               daily=c("temperature_2m_min","temperature_2m_max","precipitation_sum","windspeed_10m_max","sunrise","sunset"))
+
+nh_hist<-left_join(nh_hist_day,nh_hist_daily_soil_sum,by="date")
+
+write.csv(nh_hist_day,"data/nh_hist_day.csv")
+write.csv(nh_hist_daily_soil_sum,"data/nh_hist_daily_soil_sum.csv")
+write.csv(nh_hist,"data/nh_hist.csv")
+
+```
+
+```{r,echo=F,warning=F}
+#read in daily 
 nh_hist<-read.csv("data/nh_hist.csv")
 nh_hist$date<-as.Date(nh_hist$date)
+nh_hist$daily_sunrise<-as.POSIXct(nh_hist$daily_sunrise,format="%Y-%m-%dT%H:%M",tz="UTC")
+nh_hist$daily_sunset<-as.POSIXct(nh_hist$daily_sunset,format="%Y-%m-%dT%H:%M",tz="UTC")
+
 nh_hist<-na.omit(nh_hist)
 nh_hist<-nh_hist|>select(-X)|>tsibble(index=date)
 
-
+#quick examination of ACF plots
 nh_hist |>
   ACF(daily_precipitation_sum ,lag_max = 365) |>
   autoplot()
@@ -70,8 +106,20 @@ nh_hist |>
   ACF(daily_windspeed_10m_max ,lag_max = 365) |>
   autoplot()
 
+#let's examine all the temperatures!
 
+ggplot(data=nh_hist,aes(x=date))+
+  geom_line(aes(y=daily_temperature_2m_min,color="Min Air Temp at 2m"))+
+  geom_line(aes(y=daily_temperature_2m_max,color="Max Air Temp at 2m"))+
+  geom_line(aes(y=shallow_soil_daily_mean,color="Shallow Soil Temp (0-7cm)"))+
+  geom_line(aes(y=deep_soil_daily_mean,color="Deep Soil Temp (28-100cm)"))+
+  labs(y="Temperature (°C)",color="ERA5 Temperature Variables")
+```
+Cool, but how much can we trust these downscaled modeled data? Let's compare to NOAA weather station data from Durham, NH [(GHCND: USC00272174)](https://www.ncei.noaa.gov/access/past-weather/Durham%2C%20NH). The `rnoaa` package is sadly defunct, so for ease just download. 
 
+Once that is read in, we will calculate the day of first frost (0°C) and first day below of 25°F (-3.89°C) from August 1st each year, and compare to the gingko leaf drop date.
+
+```{r,echo=F,warning=F}
 #now get weather station data
 noaa_hist<-read.csv("data/noaa_hist.csv")
 noaa_hist$date<-as.Date(noaa_hist$date,format="%m/%d/%Y")
@@ -83,37 +131,63 @@ noaa_hist<-noaa_hist|>tsibble(index=date)
 dates<-unique(gingko$Year)
 
 
+noaa_hist<-read.csv("data/noaa_hist.csv")
+noaa_hist$date<-as.Date(noaa_hist$date,format="%m/%d/%Y")
+noaa_hist<-na.omit(noaa_hist)
+
+noaa_hist<-noaa_hist|>tsibble(index=date)
+
+#get first frost dates
+dates<-unique(gingko$Year)
+
+
 for (i in 1:length(dates)){
-  #era5
- # dates_i_era5<-nh_hist|>
- #   dplyr::filter(year(date)==dates[i]) |>
- #   dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
- # frost_dates_era5<-dates_i_era5 |>
- #   dplyr::filter(daily_temperature_2m_min <=(-3.888))
- # first_frost_era5<-as.Date(frost_dates_era5[[1,1]])
- # first_frost_julian_era5<-julian(first_frost_era5,origin=as.Date(paste0(dates[i],"-01-01")))
-  dates_i_noaa1<-noaa_hist|>
-    dplyr::filter(year(date)==dates[i]) |>
-    dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
-  frost_dates_noaa1<-dates_i_noaa1 |>
-    dplyr::filter(temp_min <=32)
-  first_frost_noaa1<-as.Date(frost_dates_noaa1[[1,3]])
-  first_frost_julian_noaa1<-julian(first_frost_noaa1,origin=as.Date(paste0(dates[i],"-01-01")))
-  #noaa
+#first stop, weather station data
   dates_i_noaa<-noaa_hist|>
     dplyr::filter(year(date)==dates[i]) |>
     dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
-  frost_dates_noaa<-dates_i_noaa |>
-    dplyr::filter(temp_min <=25)
-  first_frost_noaa<-as.Date(frost_dates_noaa[[1,3]])
+  
+  first_frost_noaa<-dates_i_noaa |>
+    dplyr::filter(temp_min <=0) |>
+    pull(date) |>
+    first()
+  
   first_frost_julian_noaa<-julian(first_frost_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
   
-  gingko[i,3]<-first_frost_noaa1
-  gingko[i,4]<-first_frost_julian_noaa1
-  gingko[i,5]<-first_frost_noaa
-  gingko[i,6]<-first_frost_julian_noaa 
+  first_deep_freeze_noaa<-dates_i_noaa |>
+    dplyr::filter(temp_min <=-3.89) |>
+    pull(date) |>
+    first()
+    
+  first_deep_freeze_julian_noaa<-julian(first_frost_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
+
+#next stop, openmeteo
+  dates_i_openmeteo<-nh_hist|>
+    dplyr::filter(year(date)==dates[i]) |>
+    dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
   
+  first_frost_openmeteo<-dates_i_openmeteo |>
+    dplyr::filter(daily_temperature_2m_min <=0) |>
+    pull(date) |>
+    first()
   
+  first_frost_julian_openmeteo<-julian(first_frost_openmeteo,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  first_deep_freeze_openmeteo<-dates_i_openmeteo |>
+    dplyr::filter(daily_temperature_2m_min <=-3.89) |>
+    pull(date) |>
+    first()
+    
+  first_deep_freeze_julian_openmeteo<-julian(first_deep_freeze_openmeteo,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  gingko[i,3]<-first_frost_noaa
+  gingko[i,4]<-first_frost_julian_noaa
+  gingko[i,5]<-first_deep_freeze_noaa
+  gingko[i,6]<-first_deep_freeze_julian_noaa
+  gingko[i,7]<-first_frost_openmeteo
+  gingko[i,8]<-first_frost_julian_openmeteo
+  gingko[i,9]<-first_deep_freeze_openmeteo
+  gingko[i,10]<-first_deep_freeze_julian_openmeteo 
   
 }
 
@@ -121,27 +195,38 @@ for (i in 1:length(dates)){
 
 
 gingko<-gingko|>
-  rename("frost_date_32"="...3","frost_date_julian_32"="...4","frost_date_noaa_25"="...5","frost_date_julian_noaa_25"="...6")
+  rename("first_frost_noaa"="...3","first_frost_julian_noaa"="...4","first_deep_freeze_noaa"="...5",
+         "first_deep_freeze_julian_noaa"="...6",
+         "first_frost_openmeteo"="...7","first_frost_julian_openmeteo"="...8","first_deep_freeze_openmeteo"="...9",
+         "first_deep_freeze_julian_openmeteo"="...10")
+```
 
-gingko<-gingko|>
-  pivot_longer(cols=starts_with("frost_date_julian"),
+## Meteo Data Exploration
+
+A quick investigation into whether ERA5/Openmeteo data and weather station data are correlated, and if there is a link with leaf drop date
+
+```{r,echo=F,warning=F}
+
+gingko_firstfrost<-gingko|>
+  pivot_longer(cols=starts_with("first_deep_freeze_julian"),
                names_to="data_source",
                values_to="julian_frost")
 
-ggplot(data=gingko,aes(x=julian_frost,y=Julian.day,color=data_source))+
+ggplot(data=gingko_firstfrost,aes(x=julian_frost,y=Julian.day,color=data_source))+
   geom_point()+
   geom_abline(slope=1,intercept=0,linetype="dashed")+labs(x="Frost Julian Day",y="Gingko Leaf Drop Julian Day",color="Data Source")
 
 ggplot()+
-  geom_line(data=gingko,aes(x=Year,y=Julian.day),color="black")+
-  stat_smooth(data=gingko,aes(x=Year,y=Julian.day),method="lm",color="black")+
-  geom_line(data=gingko,aes(x=Year,y=julian_frost,color=data_source))+
-  stat_smooth(data=gingko,aes(x=Year,y=julian_frost,color=data_source),method="lm")
+  geom_line(data=gingko_firstfrost,aes(x=Year,y=Julian.day),color="black")+
+  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=Julian.day),method="lm",color="black")+
+  geom_line(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source))+
+  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source),method="lm")
 
 ```
 
+## WIP - ERA5 Data Extraction with mcera5 
 
-```{r,message=F}
+```{r,message=F,eval=F}
 
 
 #######################
