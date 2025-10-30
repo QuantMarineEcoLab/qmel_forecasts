@@ -3,4 +3,4 @@ title: "QMEL Forecasting Group Projects"
 format: html
 ---
 
-* [Fall 2025: Gingko Forecasting](projects/gingko/)
+* [Fall 2025: Gingko Forecasting](gingko/)
