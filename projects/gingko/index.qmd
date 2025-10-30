@@ -1,6 +1,7 @@
 ---
 title: "Gingko Forecasting Project"
 format: html
+author: "Drew Villeneuve"
 ---
 
 This page contains data and scripts for QMEL forecasting of the UNH Gingko drop date!

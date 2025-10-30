@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Drew Villeneuve">
 
 <title>Gingko Forecasting Project – QMEL Forecasts</title>
 <style>
@@ -190,6 +191,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Drew Villeneuve </p>
+          </div>
+  </div>
     
   
     
@@ -234,8 +241,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The openmeteo package uses an API to query the Open Meteo dataset, with reanalysis data from ERA downscaled models. Therefore, important to note that these are MODELED data, not OBSERVATIONS.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-15796225e5602952af83" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-15796225e5602952af83">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addMarkers","args":[43.136806,-70.93427800000001,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<img src='https://npr.brightspotcdn.com/dims4/default/9e3bfd4/2147483647/strip/true/crop/1488x1116+0+0/resize/1760x1320!/format/webp/quality/90/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fe6%2F3a%2F3b3e8a6c42c8818ef0b91846a787%2Fginkgo-tree-and-leaves-on-ground-2.png' width='150' height='150'><br>UNH Gingko Tree",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[43.136806,43.136806],"lng":[-70.93427800000001,-70.93427800000001]}},"evals":[],"jsHooks":[]}</script>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-798f7f3595bb0951fd8b" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-798f7f3595bb0951fd8b">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addMarkers","args":[43.136806,-70.93427800000001,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<img src='https://npr.brightspotcdn.com/dims4/default/9e3bfd4/2147483647/strip/true/crop/1488x1116+0+0/resize/1760x1320!/format/webp/quality/90/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fe6%2F3a%2F3b3e8a6c42c8818ef0b91846a787%2Fginkgo-tree-and-leaves-on-ground-2.png' width='150' height='150'><br>UNH Gingko Tree",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[43.136806,43.136806],"lng":[-70.93427800000001,-70.93427800000001]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <p>From Openmeteo, we will extract 1) Minimum daily temperature at 2m, 2) Maximum daily temperature at 2m, 3) Daily precipitation, 4) Maximum daily windspeed at 10m, 5) sunrise and sunset, 6) Soil temperature from 0-7cm depth (hourly), and 7) Soil temperature from 28-100cm depth (hourly). We could get hourly temperature and precip, for example, if we think that accumulation is more important than threshold values There are many other variables available, see the <a href="https://open-meteo.com/en/docs">Open Meteo documentation</a> for more information.</p>
