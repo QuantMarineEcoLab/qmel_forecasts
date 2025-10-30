@@ -11,7 +11,7 @@ As of 09/16/2025, this is not organized from the last time Drew played around wi
 
 Dr. Seria Frey (UNH NRES) has been [continuing data collection](https://www.nhpr.org/environment/2023-11-17/this-year-a-ginkgo-tree-at-the-university-of-new-hampshire-lost-its-leaves-later-than-ever) of the UNH Gingko tree leaf drop date, a dataset that has been collected more or less continuously since 1977. 
 
-```{r, message=F,warning=F}
+```{r, echo=F,message=F,warning=F}
 readRenviron(".Renviron")
 
 library(fpp3)
@@ -48,7 +48,7 @@ gingko |>
 
 The openmeteo package uses an API to query the Open Meteo dataset, with reanalysis data from ERA downscaled models. Therefore, important to note that these are MODELED data, not OBSERVATIONS. 
 
-```{r,message=F,eval=T,warning=F}
+```{r,message=F,eval=T,warning=F,echo=F}
 
 gingko_coords<-c(43.136806, -70.934278)
 #unsilence to create nh_hist_day from scratch
@@ -63,7 +63,7 @@ leaflet() %>%
 
 From Openmeteo, we will extract 1) Minimum daily temperature at 2m, 2) Maximum daily temperature at 2m, 3) Daily precipitation, 4) Maximum daily windspeed at 10m,  5) sunrise and sunset,  6) Soil temperature from 0-7cm depth (hourly), and 7) Soil temperature from 28-100cm depth (hourly). We could get hourly temperature and precip, for example, if we think that accumulation is more important than threshold values There are many other variables available, see the [Open Meteo documentation](https://open-meteo.com/en/docs) for more information.
 
-```{r,message=F,eval=F,warning=F}
+```{r,message=F,eval=F,warning=F,echo=F}
 
 nh_hist_hourly<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
                 hourly=c("soil_temperature_0_to_7cm","soil_temperature_28_to_100cm"))
@@ -119,7 +119,7 @@ Cool, but how much can we trust these downscaled modeled data? Let's compare to 
 
 Once that is read in, we will calculate the day of first frost (0°C) and first day below of 25°F (-3.89°C) from August 1st each year, and compare to the gingko leaf drop date.
 
-```{r,echo=F,warning=F}
+```{r,echo=F,warning=F,message=F}
 #now get weather station data
 noaa_hist<-read.csv("data/noaa_hist.csv")
 noaa_hist$date<-as.Date(noaa_hist$date,format="%m/%d/%Y")
@@ -205,7 +205,7 @@ gingko<-gingko|>
 
 A quick investigation into whether ERA5/Openmeteo data and weather station data are correlated, and if there is a link with leaf drop date
 
-```{r,echo=F,warning=F}
+```{r,echo=F,warning=F,message=F}
 
 gingko_firstfrost<-gingko|>
   pivot_longer(cols=starts_with("first_deep_freeze_julian"),
