@@ -1,7 +1,7 @@
 library(fpp3)
 
 #Load data
-ginko<-read.csv("GingkoTreeData.csv")
+ginko<-read.csv("Data/GingkoTreeData.csv")
 
 
 str(ginko)
@@ -107,4 +107,5 @@ report(fit)
 fit %>% forecast(h = 12) %>%
   autoplot(ginko_ts_zeroes)
 View(fit %>% forecast(h = 12))
+
 
