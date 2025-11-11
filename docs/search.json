@@ -243,5 +243,33 @@
     "title": "Gingko Forecasting Project",
     "section": "WIP - ERA5 Data Extraction with mcera5",
     "text": "WIP - ERA5 Data Extraction with mcera5\n\n#######################\n#era5\nlibrary(mcera5,attach.required=T)\nlibrary(ecmwfr)\nlibrary(microclima)\nlibrary(NicheMapR)\nlibrary(devtools)\nlibrary(tidyverse)\nlibrary(ncdf4)\nlibrary(curl)\nlibrary(keyring)\nlibrary(abind)\nlibrary(lubridate)\nlibrary(tidync)\n\n#my tokens are secret - you will need to get your own, see vignette for mcera5\nvignette(\"mcera5_vignette\", package = \"mcera5\")\nuid &lt;- Sys.getenv(\"uid\")\ncds_access_token &lt;- Sys.getenv(\"cds_access_token\")\n\n\necmwfr::wf_set_key(user = uid,\n                   key = cds_access_token)\n\ndurham_coords&lt;-c(43.136722, -70.934333)\nxmn &lt;- durham_coords[2]\nxmx &lt;- durham_coords[2]\nymn &lt;- durham_coords[1]\nymx &lt;- durham_coords[1]\n\n# temporal extent\nst_time &lt;- as.POSIXlt(\"2023-01-01 00:00\", tz = \"UTC\")\nen_time &lt;- as.POSIXlt(\"2023-12-01 23:00\",  tz = \"UTC\")\n\n\n# Set a unique prefix for the filename (here based on spatial\n# coordinates), and the file path for downloaded .nc files\nfile_prefix &lt;- \"era5_durham\"\nfile_path &lt;- \"projects/gingko/data/era_data\"\n\n\n# build a request (covering multiple years)\nreq &lt;- build_era5_request(xmin = xmn, xmax = xmx, \n                          ymin = ymn, ymax = ymx,\n                          start_time = st_time,\n                          end_time = en_time,\n                          outfile_name = file_prefix)"
+  },
+  {
+    "objectID": "projects/gingko/index.html#first-frost",
+    "href": "projects/gingko/index.html#first-frost",
+    "title": "Gingko Forecasting Project",
+    "section": "First Frost",
+    "text": "First Frost\nThis forecast will predict 2025 gingko leaf drop date based on a naive model of the first frost date from NOAA weather station data.\n\n\n\n\n\n\n\n\n\n# A fable: 5 x 4 [1Y]\n# Key:     .model [1]\n  .model  Year first_frost_julian_noaa\n  &lt;chr&gt;  &lt;dbl&gt;                  &lt;dist&gt;\n1 NAIVE…  2025             N(289, 199)\n2 NAIVE…  2026             N(289, 398)\n3 NAIVE…  2027             N(289, 597)\n4 NAIVE…  2028             N(289, 795)\n5 NAIVE…  2029             N(289, 994)\n# ℹ 1 more variable: .mean &lt;dbl&gt;\n\n\nNaive model predicts 289 julian day for gingko leaf drop date, which is approximately 2025-10-17, 2025-10-17, 2025-10-17, 2025-10-17, 2025-10-17 or around October 17, 2025."
+  },
+  {
+    "objectID": "projects/gingko/index.html#first-deep-freeze",
+    "href": "projects/gingko/index.html#first-deep-freeze",
+    "title": "Gingko Forecasting Project",
+    "section": "First deep Freeze",
+    "text": "First deep Freeze\n\n\n\n\n\n\n\n\n\n# A fable: 5 x 4 [1Y]\n# Key:     .model [1]\n  .model  Year first_deep_freeze_julian_noaa\n  &lt;chr&gt;  &lt;dbl&gt;                        &lt;dist&gt;\n1 NAIVE…  2025                   N(302, 185)\n2 NAIVE…  2026                   N(302, 370)\n3 NAIVE…  2027                   N(302, 555)\n4 NAIVE…  2028                   N(302, 741)\n5 NAIVE…  2029                   N(302, 926)\n# ℹ 1 more variable: .mean &lt;dbl&gt;\n\n\nNaive model predicts 302 julian day for gingko leaf drop date, which is approximately 2025-10-30, 2025-10-30, 2025-10-30, 2025-10-30, 2025-10-30 or around October 30, 2025."
+  },
+  {
+    "objectID": "projects/gingko/index.html#gingko-drop-day-itself",
+    "href": "projects/gingko/index.html#gingko-drop-day-itself",
+    "title": "Gingko Forecasting Project",
+    "section": "Gingko Drop Day itself",
+    "text": "Gingko Drop Day itself\n\n\n\n\n\n\n\n\n\n# A fable: 5 x 4 [1Y]\n# Key:     .model [1]\n  .model  Year  Julian.day\n  &lt;chr&gt;  &lt;dbl&gt;      &lt;dist&gt;\n1 NAIVE…  2025  N(308, 47)\n2 NAIVE…  2026  N(308, 95)\n3 NAIVE…  2027 N(308, 142)\n4 NAIVE…  2028 N(308, 189)\n5 NAIVE…  2029 N(308, 237)\n# ℹ 1 more variable: .mean &lt;dbl&gt;\n\n\nNaive model predicts 308 julian day for gingko leaf drop date, which is approximately 2025-11-05, 2025-11-05, 2025-11-05, 2025-11-05, 2025-11-05 or around November 5th, 2025."
+  },
+  {
+    "objectID": "projects/gingko/index.html#soil-temperature",
+    "href": "projects/gingko/index.html#soil-temperature",
+    "title": "Gingko Forecasting Project",
+    "section": "Soil Temperature",
+    "text": "Soil Temperature\n\n\n\n\n\n\n\n\n\n# A fable: 5 x 4 [1Y]\n# Key:     .model [1]\n  .model  Year first_frost_julian_shallowsoil\n  &lt;chr&gt;  &lt;dbl&gt;                         &lt;dist&gt;\n1 NAIVE…  2025                    N(332, 252)\n2 NAIVE…  2026                    N(332, 505)\n3 NAIVE…  2027                    N(332, 757)\n4 NAIVE…  2028                   N(332, 1010)\n5 NAIVE…  2029                   N(332, 1262)\n# ℹ 1 more variable: .mean &lt;dbl&gt;\n\n\nNaive model predicts 332 julian day for gingko leaf drop date, which is approximately 2025-11-29, 2025-11-29, 2025-11-29, 2025-11-29, 2025-11-29 or around November 29th, 2025."
   }
 ]

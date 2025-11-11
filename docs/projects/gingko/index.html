@@ -171,11 +171,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#gingko-leaf-drop-data" id="toc-gingko-leaf-drop-data" class="nav-link active" data-scroll-target="#gingko-leaf-drop-data">Gingko Leaf Drop Data</a></li>
-  <li><a href="#lets-get-temp-precip-and-wind-speed-data-with-openmeteo" id="toc-lets-get-temp-precip-and-wind-speed-data-with-openmeteo" class="nav-link" data-scroll-target="#lets-get-temp-precip-and-wind-speed-data-with-openmeteo">Let’s get temp, precip, and wind speed data with openmeteo</a>
-  <ul class="collapse">
+  <li><a href="#lets-get-temp-precip-and-wind-speed-data-with-openmeteo" id="toc-lets-get-temp-precip-and-wind-speed-data-with-openmeteo" class="nav-link" data-scroll-target="#lets-get-temp-precip-and-wind-speed-data-with-openmeteo">Let’s get temp, precip, and wind speed data with openmeteo</a></li>
   <li><a href="#meteo-data-exploration" id="toc-meteo-data-exploration" class="nav-link" data-scroll-target="#meteo-data-exploration">Meteo Data Exploration</a></li>
-  <li><a href="#wip---era5-data-extraction-with-mcera5" id="toc-wip---era5-data-extraction-with-mcera5" class="nav-link" data-scroll-target="#wip---era5-data-extraction-with-mcera5">WIP - ERA5 Data Extraction with mcera5</a></li>
+  <li><a href="#drews-forecast---naive-model" id="toc-drews-forecast---naive-model" class="nav-link" data-scroll-target="#drews-forecast---naive-model">Drew’s forecast - Naive Model</a>
+  <ul class="collapse">
+  <li><a href="#first-frost" id="toc-first-frost" class="nav-link" data-scroll-target="#first-frost">First Frost</a></li>
+  <li><a href="#first-deep-freeze" id="toc-first-deep-freeze" class="nav-link" data-scroll-target="#first-deep-freeze">First deep Freeze</a></li>
+  <li><a href="#gingko-drop-day-itself" id="toc-gingko-drop-day-itself" class="nav-link" data-scroll-target="#gingko-drop-day-itself">Gingko Drop Day itself</a></li>
+  <li><a href="#soil-temperature" id="toc-soil-temperature" class="nav-link" data-scroll-target="#soil-temperature">Soil Temperature</a></li>
   </ul></li>
+  <li><a href="#wip---era5-data-extraction-with-mcera5" id="toc-wip---era5-data-extraction-with-mcera5" class="nav-link" data-scroll-target="#wip---era5-data-extraction-with-mcera5">WIP - ERA5 Data Extraction with mcera5</a></li>
   </ul>
 </nav>
     </div>
@@ -209,8 +214,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <p>This page contains data and scripts for QMEL forecasting of the UNH Gingko drop date!</p>
 <p>As of 09/16/2025, this is not organized from the last time Drew played around with the gingko data.</p>
-<section id="gingko-leaf-drop-data" class="level2">
-<h2 class="anchored" data-anchor-id="gingko-leaf-drop-data">Gingko Leaf Drop Data</h2>
+<section id="gingko-leaf-drop-data" class="level1">
+<h1>Gingko Leaf Drop Data</h1>
 <p>Dr.&nbsp;Seria Frey (UNH NRES) has been <a href="https://www.nhpr.org/environment/2023-11-17/this-year-a-ginkgo-tree-at-the-university-of-new-hampshire-lost-its-leaves-later-than-ever">continuing data collection</a> of the UNH Gingko tree leaf drop date, a dataset that has been collected more or less continuously since 1977.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -241,12 +246,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The openmeteo package uses an API to query the Open Meteo dataset, with reanalysis data from ERA downscaled models. Therefore, important to note that these are MODELED data, not OBSERVATIONS.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-798f7f3595bb0951fd8b" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-798f7f3595bb0951fd8b">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addMarkers","args":[43.136806,-70.93427800000001,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<img src='https://npr.brightspotcdn.com/dims4/default/9e3bfd4/2147483647/strip/true/crop/1488x1116+0+0/resize/1760x1320!/format/webp/quality/90/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fe6%2F3a%2F3b3e8a6c42c8818ef0b91846a787%2Fginkgo-tree-and-leaves-on-ground-2.png' width='150' height='150'><br>UNH Gingko Tree",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[43.136806,43.136806],"lng":[-70.93427800000001,-70.93427800000001]}},"evals":[],"jsHooks":[]}</script>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-924105b770dcb4ac781b" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-924105b770dcb4ac781b">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addMarkers","args":[43.136806,-70.93427800000001,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},"<img src='https://npr.brightspotcdn.com/dims4/default/9e3bfd4/2147483647/strip/true/crop/1488x1116+0+0/resize/1760x1320!/format/webp/quality/90/?url=http%3A%2F%2Fnpr-brightspot.s3.amazonaws.com%2Fe6%2F3a%2F3b3e8a6c42c8818ef0b91846a787%2Fginkgo-tree-and-leaves-on-ground-2.png' width='150' height='150'><br>UNH Gingko Tree",null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[43.136806,43.136806],"lng":[-70.93427800000001,-70.93427800000001]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <p>From Openmeteo, we will extract 1) Minimum daily temperature at 2m, 2) Maximum daily temperature at 2m, 3) Daily precipitation, 4) Maximum daily windspeed at 10m, 5) sunrise and sunset, 6) Soil temperature from 0-7cm depth (hourly), and 7) Soil temperature from 28-100cm depth (hourly). We could get hourly temperature and precip, for example, if we think that accumulation is more important than threshold values There are many other variables available, see the <a href="https://open-meteo.com/en/docs">Open Meteo documentation</a> for more information.</p>
 <div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>nh_hist_hourly<span class="ot">&lt;-</span><span class="fu">weather_history</span>(gingko_coords,<span class="at">start=</span><span class="st">"1977-01-01"</span>,<span class="at">end=</span><span class="st">"2024-12-01"</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">hourly=</span><span class="fu">c</span>(<span class="st">"soil_temperature_0_to_7cm"</span>,<span class="st">"soil_temperature_28_to_100cm"</span>))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">#get daily summaries of soil temp</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>nh_hist_daily_soil_sum<span class="ot">&lt;-</span>nh_hist_hourly<span class="sc">%&gt;%</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">as.Date</span>(datetime)) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(date)<span class="sc">%&gt;%</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">shallow_soil_daily_mean=</span><span class="fu">mean</span>(hourly_soil_temperature_0_to_7cm),</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">deep_soil_daily_mean=</span><span class="fu">mean</span>(hourly_soil_temperature_28_to_100cm))<span class="sc">%&gt;%</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>nh_hist_day<span class="ot">&lt;-</span><span class="fu">weather_history</span>(gingko_coords,<span class="at">start=</span><span class="st">"1977-01-01"</span>,<span class="at">end=</span><span class="st">"2024-12-01"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>               <span class="at">daily=</span><span class="fu">c</span>(<span class="st">"temperature_2m_min"</span>,<span class="st">"temperature_2m_max"</span>,<span class="st">"precipitation_sum"</span>,<span class="st">"windspeed_10m_max"</span>,<span class="st">"sunrise"</span>,<span class="st">"sunset"</span>))</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>nh_hist<span class="ot">&lt;-</span><span class="fu">left_join</span>(nh_hist_day,nh_hist_daily_soil_sum,<span class="at">by=</span><span class="st">"date"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(nh_hist_day,<span class="st">"data/nh_hist_day.csv"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(nh_hist_daily_soil_sum,<span class="st">"data/nh_hist_daily_soil_sum.csv"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(nh_hist,<span class="st">"data/nh_hist.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 48 × 4
+    year min_air_temp min_shallow_soil_temp min_deep_soil_temp
+   &lt;dbl&gt;        &lt;dbl&gt;                 &lt;dbl&gt;              &lt;dbl&gt;
+ 1  1977        -19.4                -3.02                3.03
+ 2  1978        -12.2                -3.34                2   
+ 3  1979        -14.1                -4.2                 2.52
+ 4  1980        -25.4                -2.62                1.89
+ 5  1981        -15.1                 0.075               5.1 
+ 6  1982        -13.7                -3.64                2.73
+ 7  1983        -21.2                -7.34                0.7 
+ 8  1984        -14.8                -2.4                 3.43
+ 9  1985        -19.1                -3.60                2.15
+10  1986        -10.6                -1.97                2.6 
+# ℹ 38 more rows</code></pre>
+</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -271,8 +313,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Cool, but how much can we trust these downscaled modeled data? Let’s compare to NOAA weather station data from Durham, NH <a href="https://www.ncei.noaa.gov/access/past-weather/Durham%2C%20NH">(GHCND: USC00272174)</a>. The <code>rnoaa</code> package is sadly defunct, so for ease just download.</p>
 <p>Once that is read in, we will calculate the day of first frost (0°C) and first day below of 25°F (-3.89°C) from August 1st each year, and compare to the gingko leaf drop date.</p>
-<section id="meteo-data-exploration" class="level2">
-<h2 class="anchored" data-anchor-id="meteo-data-exploration">Meteo Data Exploration</h2>
+</section>
+<section id="meteo-data-exploration" class="level1">
+<h1>Meteo Data Exploration</h1>
 <p>A quick investigation into whether ERA5/Openmeteo data and weather station data are correlated, and if there is a link with leaf drop date</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -291,60 +334,163 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="wip---era5-data-extraction-with-mcera5" class="level2">
-<h2 class="anchored" data-anchor-id="wip---era5-data-extraction-with-mcera5">WIP - ERA5 Data Extraction with mcera5</h2>
+<section id="drews-forecast---naive-model" class="level1">
+<h1>Drew’s forecast - Naive Model</h1>
+<section id="first-frost" class="level2">
+<h2 class="anchored" data-anchor-id="first-frost">First Frost</h2>
+<p>This forecast will predict 2025 gingko leaf drop date based on a naive model of the first frost date from NOAA weather station data.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">#######################</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#era5</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mcera5,<span class="at">attach.required=</span>T)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecmwfr)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(microclima)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(NicheMapR)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ncdf4)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(curl)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(keyring)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(abind)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidync)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">#my tokens are secret - you will need to get your own, see vignette for mcera5</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">"mcera5_vignette"</span>, <span class="at">package =</span> <span class="st">"mcera5"</span>)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>uid <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"uid"</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>cds_access_token <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"cds_access_token"</span>)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>ecmwfr<span class="sc">::</span><span class="fu">wf_set_key</span>(<span class="at">user =</span> uid,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                   <span class="at">key =</span> cds_access_token)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>durham_coords<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="fl">43.136722</span>, <span class="sc">-</span><span class="fl">70.934333</span>)</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>xmn <span class="ot">&lt;-</span> durham_coords[<span class="dv">2</span>]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>xmx <span class="ot">&lt;-</span> durham_coords[<span class="dv">2</span>]</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>ymn <span class="ot">&lt;-</span> durham_coords[<span class="dv">1</span>]</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>ymx <span class="ot">&lt;-</span> durham_coords[<span class="dv">1</span>]</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># temporal extent</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>st_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXlt</span>(<span class="st">"2023-01-01 00:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>en_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXlt</span>(<span class="st">"2023-12-01 23:00"</span>,  <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Set a unique prefix for the filename (here based on spatial</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates), and the file path for downloaded .nc files</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>file_prefix <span class="ot">&lt;-</span> <span class="st">"era5_durham"</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> <span class="st">"projects/gingko/data/era_data"</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># build a request (covering multiple years)</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>req <span class="ot">&lt;-</span> <span class="fu">build_era5_request</span>(<span class="at">xmin =</span> xmn, <span class="at">xmax =</span> xmx, </span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>                          <span class="at">ymin =</span> ymn, <span class="at">ymax =</span> ymx,</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>                          <span class="at">start_time =</span> st_time,</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>                          <span class="at">end_time =</span> en_time,</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outfile_name =</span> file_prefix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A fable: 5 x 4 [1Y]
+# Key:     .model [1]
+  .model  Year first_frost_julian_noaa
+  &lt;chr&gt;  &lt;dbl&gt;                  &lt;dist&gt;
+1 NAIVE…  2025             N(289, 199)
+2 NAIVE…  2026             N(289, 398)
+3 NAIVE…  2027             N(289, 597)
+4 NAIVE…  2028             N(289, 795)
+5 NAIVE…  2029             N(289, 994)
+# ℹ 1 more variable: .mean &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Naive model predicts 289 julian day for gingko leaf drop date, which is approximately 2025-10-17, 2025-10-17, 2025-10-17, 2025-10-17, 2025-10-17 or around October 17, 2025.</p>
+</section>
+<section id="first-deep-freeze" class="level2">
+<h2 class="anchored" data-anchor-id="first-deep-freeze">First deep Freeze</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A fable: 5 x 4 [1Y]
+# Key:     .model [1]
+  .model  Year first_deep_freeze_julian_noaa
+  &lt;chr&gt;  &lt;dbl&gt;                        &lt;dist&gt;
+1 NAIVE…  2025                   N(302, 185)
+2 NAIVE…  2026                   N(302, 370)
+3 NAIVE…  2027                   N(302, 555)
+4 NAIVE…  2028                   N(302, 741)
+5 NAIVE…  2029                   N(302, 926)
+# ℹ 1 more variable: .mean &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Naive model predicts 302 julian day for gingko leaf drop date, which is approximately 2025-10-30, 2025-10-30, 2025-10-30, 2025-10-30, 2025-10-30 or around October 30, 2025.</p>
+</section>
+<section id="gingko-drop-day-itself" class="level2">
+<h2 class="anchored" data-anchor-id="gingko-drop-day-itself">Gingko Drop Day itself</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A fable: 5 x 4 [1Y]
+# Key:     .model [1]
+  .model  Year  Julian.day
+  &lt;chr&gt;  &lt;dbl&gt;      &lt;dist&gt;
+1 NAIVE…  2025  N(308, 47)
+2 NAIVE…  2026  N(308, 95)
+3 NAIVE…  2027 N(308, 142)
+4 NAIVE…  2028 N(308, 189)
+5 NAIVE…  2029 N(308, 237)
+# ℹ 1 more variable: .mean &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Naive model predicts 308 julian day for gingko leaf drop date, which is approximately 2025-11-05, 2025-11-05, 2025-11-05, 2025-11-05, 2025-11-05 or around November 5th, 2025.</p>
+</section>
+<section id="soil-temperature" class="level2">
+<h2 class="anchored" data-anchor-id="soil-temperature">Soil Temperature</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A fable: 5 x 4 [1Y]
+# Key:     .model [1]
+  .model  Year first_frost_julian_shallowsoil
+  &lt;chr&gt;  &lt;dbl&gt;                         &lt;dist&gt;
+1 NAIVE…  2025                    N(332, 252)
+2 NAIVE…  2026                    N(332, 505)
+3 NAIVE…  2027                    N(332, 757)
+4 NAIVE…  2028                   N(332, 1010)
+5 NAIVE…  2029                   N(332, 1262)
+# ℹ 1 more variable: .mean &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Naive model predicts 332 julian day for gingko leaf drop date, which is approximately 2025-11-29, 2025-11-29, 2025-11-29, 2025-11-29, 2025-11-29 or around November 29th, 2025.</p>
+</section>
+</section>
+<section id="wip---era5-data-extraction-with-mcera5" class="level1">
+<h1>WIP - ERA5 Data Extraction with mcera5</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">#######################</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#era5</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mcera5,<span class="at">attach.required=</span>T)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ecmwfr)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(microclima)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(NicheMapR)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ncdf4)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(curl)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(keyring)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(abind)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidync)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co">#my tokens are secret - you will need to get your own, see vignette for mcera5</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="fu">vignette</span>(<span class="st">"mcera5_vignette"</span>, <span class="at">package =</span> <span class="st">"mcera5"</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>uid <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"uid"</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>cds_access_token <span class="ot">&lt;-</span> <span class="fu">Sys.getenv</span>(<span class="st">"cds_access_token"</span>)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>ecmwfr<span class="sc">::</span><span class="fu">wf_set_key</span>(<span class="at">user =</span> uid,</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>                   <span class="at">key =</span> cds_access_token)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>durham_coords<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="fl">43.136722</span>, <span class="sc">-</span><span class="fl">70.934333</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>xmn <span class="ot">&lt;-</span> durham_coords[<span class="dv">2</span>]</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>xmx <span class="ot">&lt;-</span> durham_coords[<span class="dv">2</span>]</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>ymn <span class="ot">&lt;-</span> durham_coords[<span class="dv">1</span>]</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>ymx <span class="ot">&lt;-</span> durham_coords[<span class="dv">1</span>]</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co"># temporal extent</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>st_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXlt</span>(<span class="st">"2023-01-01 00:00"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>en_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXlt</span>(<span class="st">"2023-12-01 23:00"</span>,  <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Set a unique prefix for the filename (here based on spatial</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates), and the file path for downloaded .nc files</span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>file_prefix <span class="ot">&lt;-</span> <span class="st">"era5_durham"</span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>file_path <span class="ot">&lt;-</span> <span class="st">"projects/gingko/data/era_data"</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a><span class="co"># build a request (covering multiple years)</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>req <span class="ot">&lt;-</span> <span class="fu">build_era5_request</span>(<span class="at">xmin =</span> xmn, <span class="at">xmax =</span> xmx, </span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>                          <span class="at">ymin =</span> ymn, <span class="at">ymax =</span> ymx,</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>                          <span class="at">start_time =</span> st_time,</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>                          <span class="at">end_time =</span> en_time,</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outfile_name =</span> file_prefix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

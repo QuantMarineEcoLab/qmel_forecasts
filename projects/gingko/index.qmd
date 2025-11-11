@@ -8,7 +8,7 @@ This page contains data and scripts for QMEL forecasting of the UNH Gingko drop 
 
 As of 09/16/2025, this is not organized from the last time Drew played around with the gingko data.
 
-## Gingko Leaf Drop Data
+# Gingko Leaf Drop Data
 
 Dr. Seria Frey (UNH NRES) has been [continuing data collection](https://www.nhpr.org/environment/2023-11-17/this-year-a-ginkgo-tree-at-the-university-of-new-hampshire-lost-its-leaves-later-than-ever) of the UNH Gingko tree leaf drop date, a dataset that has been collected more or less continuously since 1977. 
 
@@ -64,7 +64,7 @@ leaflet() %>%
 
 From Openmeteo, we will extract 1) Minimum daily temperature at 2m, 2) Maximum daily temperature at 2m, 3) Daily precipitation, 4) Maximum daily windspeed at 10m,  5) sunrise and sunset,  6) Soil temperature from 0-7cm depth (hourly), and 7) Soil temperature from 28-100cm depth (hourly). We could get hourly temperature and precip, for example, if we think that accumulation is more important than threshold values There are many other variables available, see the [Open Meteo documentation](https://open-meteo.com/en/docs) for more information.
 
-```{r,message=F,eval=F,warning=F,echo=F}
+```{r,message=F,eval=F,warning=F}
 
 nh_hist_hourly<-weather_history(gingko_coords,start="1977-01-01",end="2024-12-01",
                 hourly=c("soil_temperature_0_to_7cm","soil_temperature_28_to_100cm"))
@@ -96,6 +96,16 @@ nh_hist$daily_sunrise<-as.POSIXct(nh_hist$daily_sunrise,format="%Y-%m-%dT%H:%M",
 nh_hist$daily_sunset<-as.POSIXct(nh_hist$daily_sunset,format="%Y-%m-%dT%H:%M",tz="UTC")
 
 nh_hist<-na.omit(nh_hist)
+
+#get yearly minimum
+nh_hist%>%mutate(year=year(date))%>%
+  group_by(year)%>%
+  dplyr::filter(date>as.Date(paste0(year,"-08-01")))%>%
+  dplyr::select(-date)%>%
+  summarise(min_air_temp=min(daily_temperature_2m_min),
+            min_shallow_soil_temp=min(shallow_soil_daily_mean),
+            min_deep_soil_temp=min(deep_soil_daily_mean))
+
 nh_hist<-nh_hist|>select(-X)|>tsibble(index=date)
 
 #quick examination of ACF plots
@@ -115,6 +125,9 @@ ggplot(data=nh_hist,aes(x=date))+
   geom_line(aes(y=shallow_soil_daily_mean,color="Shallow Soil Temp (0-7cm)"))+
   geom_line(aes(y=deep_soil_daily_mean,color="Deep Soil Temp (28-100cm)"))+
   labs(y="Temperature (°C)",color="ERA5 Temperature Variables")
+
+
+
 ```
 Cool, but how much can we trust these downscaled modeled data? Let's compare to NOAA weather station data from Durham, NH [(GHCND: USC00272174)](https://www.ncei.noaa.gov/access/past-weather/Durham%2C%20NH). The `rnoaa` package is sadly defunct, so for ease just download. 
 
@@ -156,11 +169,11 @@ for (i in 1:length(dates)){
   first_frost_julian_noaa<-julian(first_frost_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
   
   first_deep_freeze_noaa<-dates_i_noaa |>
-    dplyr::filter(temp_min <=-3.89) |>
+    dplyr::filter(temp_min <= -3.89) |>
     pull(date) |>
     first()
     
-  first_deep_freeze_julian_noaa<-julian(first_frost_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
+  first_deep_freeze_julian_noaa<-julian(first_deep_freeze_noaa,origin=as.Date(paste0(dates[i],"-01-01")))
 
 #next stop, openmeteo
   dates_i_openmeteo<-nh_hist|>
@@ -181,6 +194,42 @@ for (i in 1:length(dates)){
     
   first_deep_freeze_julian_openmeteo<-julian(first_deep_freeze_openmeteo,origin=as.Date(paste0(dates[i],"-01-01")))
   
+  #shallow soil temperature
+  dates_i_soil<-nh_hist|>
+    dplyr::filter(year(date)==dates[i]) |>
+    dplyr::filter(date>as.Date(paste0(dates[i],"-08-01")))
+  
+  first_frost_shallowsoil<-dates_i_soil |>
+    dplyr::filter(shallow_soil_daily_mean  <=0) |>
+    pull(date) |>
+    first()
+  
+  first_frost_julian_shallowsoil<-julian(first_frost_shallowsoil,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  first_deep_freeze_shallowsoil<-dates_i_soil |>
+    dplyr::filter(shallow_soil_daily_mean <=-3.89) |>
+    pull(date) |>
+    first()
+  
+  first_deep_freeze_julian_shallowsoil<-julian(first_deep_freeze_shallowsoil,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  
+  #deep soil temperature
+  first_frost_deepsoil<-dates_i_soil |>
+    dplyr::filter(deep_soil_daily_mean <=0) |>
+    pull(date) |>
+    first() 
+  
+  first_frost_julian_deepsoil<-julian(first_frost_deepsoil,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  first_deep_freeze_deepsoil<-dates_i_soil |>
+    dplyr::filter(deep_soil_daily_mean <=-3.89) |>
+    pull(date) |>
+    first()
+  
+  first_deep_freeze_julian_deepsoil<-julian(first_deep_freeze_deepsoil,origin=as.Date(paste0(dates[i],"-01-01")))
+  
+  
   gingko[i,3]<-first_frost_noaa
   gingko[i,4]<-first_frost_julian_noaa
   gingko[i,5]<-first_deep_freeze_noaa
@@ -188,7 +237,15 @@ for (i in 1:length(dates)){
   gingko[i,7]<-first_frost_openmeteo
   gingko[i,8]<-first_frost_julian_openmeteo
   gingko[i,9]<-first_deep_freeze_openmeteo
-  gingko[i,10]<-first_deep_freeze_julian_openmeteo 
+  gingko[i,10]<-first_deep_freeze_julian_openmeteo
+  gingko[i,11]<-first_frost_shallowsoil
+  gingko[i,12]<-first_frost_julian_shallowsoil
+  gingko[i,13]<-first_deep_freeze_shallowsoil
+  gingko[i,14]<-first_deep_freeze_julian_shallowsoil
+  gingko[i,15]<-first_frost_deepsoil
+  gingko[i,16]<-first_frost_julian_deepsoil
+  gingko[i,17]<-first_deep_freeze_deepsoil
+  gingko[i,18]<-first_deep_freeze_julian_deepsoil
   
 }
 
@@ -196,36 +253,161 @@ for (i in 1:length(dates)){
 
 
 gingko<-gingko|>
-  rename("first_frost_noaa"="...3","first_frost_julian_noaa"="...4","first_deep_freeze_noaa"="...5",
+  rename("first_frost_noaa"="...3",
+         "first_frost_julian_noaa"="...4",
+         "first_deep_freeze_noaa"="...5",
          "first_deep_freeze_julian_noaa"="...6",
-         "first_frost_openmeteo"="...7","first_frost_julian_openmeteo"="...8","first_deep_freeze_openmeteo"="...9",
-         "first_deep_freeze_julian_openmeteo"="...10")
+         "first_frost_openmeteo"="...7",
+         "first_frost_julian_openmeteo"="...8",
+         "first_deep_freeze_openmeteo"="...9",
+         "first_deep_freeze_julian_openmeteo"="...10",
+         "first_frost_shallowsoil"="...11",
+         "first_frost_julian_shallowsoil"="...12",
+         "first_deep_freeze_shallowsoil"="...13",
+         "first_deep_freeze_julian_shallowsoil"="...14",
+         "first_frost_deepsoil"="...15",
+         "first_frost_julian_deepsoil"="...16",
+         "first_deep_freeze_deepsoil"="...17",
+         "first_deep_freeze_julian_deepsoil"="...18")
 ```
 
-## Meteo Data Exploration
+# Meteo Data Exploration
 
 A quick investigation into whether ERA5/Openmeteo data and weather station data are correlated, and if there is a link with leaf drop date
 
 ```{r,echo=F,warning=F,message=F}
 
-gingko_firstfrost<-gingko|>
-  pivot_longer(cols=starts_with("first_deep_freeze_julian"),
-               names_to="data_source",
-               values_to="julian_frost")
+gingko_firstfrost <- gingko |>
+  pivot_longer(
+    cols = matches("^first_.*_julian"),  # matches all julian frost/deep freeze columns
+    names_to = "data_source",
+    values_to = "julian_frost"
+  ) |>
+  mutate(
+    type = case_when(
+      str_detect(data_source, "soil") ~ "Soil Temp",
+      str_detect(data_source, "openmeteo") ~ "Openmeteo Temp",
+      str_detect(data_source, "noaa") ~ "NOAA Station Temp",
+      TRUE ~ "Other"
+    )
+  )
 
 ggplot(data=gingko_firstfrost,aes(x=julian_frost,y=Julian.day,color=data_source))+
   geom_point()+
   geom_abline(slope=1,intercept=0,linetype="dashed")+labs(x="Frost Julian Day",y="Gingko Leaf Drop Julian Day",color="Data Source")
 
 ggplot()+
-  geom_line(data=gingko_firstfrost,aes(x=Year,y=Julian.day),color="black")+
-  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=Julian.day),method="lm",color="black")+
-  geom_line(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source))+
-  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source),method="lm")
+  geom_line(data=gingko_firstfrost,aes(x=Year,y=Julian.day,linetype=type,color="Gingko Drop Date"))+
+  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=Julian.day,linetype=type,color="Gingko Drop Date"),method="lm")+
+  geom_line(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source,linetype=type))+
+  stat_smooth(data=gingko_firstfrost,aes(x=Year,y=julian_frost,color=data_source,linetype=type),method="lm") +
+  scale_color_manual(
+    name = "Data Source",
+    values = c(
+      "Gingko Drop Date" = "black",
+      "first_frost_julian_noaa" = "#1b9e77",
+      "first_frost_julian_openmeteo" = "#d95f02",
+      "first_frost_julian_shallowsoil" = "#7570b3",
+      "first_frost_julian_deepsoil" = "#e7298a",
+      "first_deep_freeze_julian_noaa" = "#66a61e",
+      "first_deep_freeze_julian_openmeteo" = "#e6ab02",
+      "first_deep_freeze_julian_shallowsoil" = "#a6761d",
+      "first_deep_freeze_julian_deepsoil" = "#666666"
+    )
+  ) 
 
 ```
 
-## WIP - ERA5 Data Extraction with mcera5 
+
+# Drew's forecast - Naive Model
+
+## First Frost
+
+This forecast will predict 2025 gingko leaf drop date based on a naive model of the first frost date from NOAA weather station data.  
+
+```{r}
+#| echo: False
+#| warning: False
+
+naive_forecast_frost_plot<-gingko|>
+  model(NAIVE(first_frost_julian_noaa)) |>
+  forecast(h=5) |>
+  autoplot(gingko)
+naive_forecast_frost_plot
+
+naive_forecast_frost<-gingko|>
+  model(NAIVE(first_frost_julian_noaa)) |>
+  forecast(h=5)
+
+naive_forecast_frost
+```
+
+Naive model predicts `r unique(naive_forecast_frost$.mean)` julian day for gingko leaf drop date, which is approximately `r as.Date("2025-01-01")+naive_forecast_frost$.mean` or around October 17, 2025.
+
+## First deep Freeze
+
+```{r}
+#| echo: False
+#| warning: False
+
+naive_forecast_df_plot<-gingko|>
+  model(NAIVE(first_deep_freeze_julian_noaa)) |>
+  forecast(h=5) |>
+  autoplot(gingko)
+naive_forecast_df_plot
+
+#view prediction
+naive_forecast_df<-gingko|>
+  model(NAIVE(first_deep_freeze_julian_noaa)) |>
+  forecast(h=5)
+naive_forecast_df
+```
+
+Naive model predicts `r unique(naive_forecast_df$.mean)` julian day for gingko leaf drop date, which is approximately `r as.Date("2025-01-01")+naive_forecast_df$.mean` or around October 30, 2025.
+
+##  Gingko Drop Day itself
+
+```{r}
+#| echo: False
+#| warning: False
+
+naive_forecast_gingko_plot<-gingko|>
+  model(NAIVE(Julian.day)) |>
+  forecast(h=5) |>
+  autoplot(gingko)
+naive_forecast_gingko_plot
+
+#view prediction
+naive_forecast_gingko<-gingko|>
+  model(NAIVE(Julian.day)) |>
+  forecast(h=5)
+naive_forecast_gingko
+```
+Naive model predicts `r unique(naive_forecast_gingko$.mean)` julian day for gingko leaf drop date, which is approximately `r as.Date("2025-01-01")+naive_forecast_gingko$.mean` or around November 5th, 2025.
+
+## Soil Temperature
+
+
+```{r}
+#| echo: False
+#| warning: False
+
+naive_forecast_ss_plot<-gingko|>
+  model(NAIVE(first_frost_julian_shallowsoil)) |>
+  forecast(h=5) |>
+  autoplot(gingko)
+naive_forecast_ss_plot
+
+#view prediction
+naive_forecast_gingko<-gingko|>
+  model(NAIVE(first_frost_julian_shallowsoil)) |>
+  forecast(h=5)
+naive_forecast_gingko
+```
+
+Naive model predicts `r unique(naive_forecast_gingko$.mean)` julian day for gingko leaf drop date, which is approximately `r as.Date("2025-01-01")+naive_forecast_gingko$.mean` or around November 29th, 2025.
+
+# WIP - ERA5 Data Extraction with mcera5 
 
 ```{r,message=F,eval=F}
 
