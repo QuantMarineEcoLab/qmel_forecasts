@@ -6,7 +6,7 @@ editor: visual
 bibliography: references.bib
 ---
 
-## Load data
+## 1. Load data
 
 ```{r}
 #| label: libraries
@@ -50,7 +50,7 @@ ginkgo$cum_neg4 = mapply(cum_days, -4, ginkgo$Year, ginkgo$Julian)
 ginkgo$cum_neg6 = mapply(cum_days, -6, ginkgo$Year, ginkgo$Julian)
 ```
 
-## Cumulative days below a threshold as a predictor
+## 2. Explore cumulative days below a threshold
 
 ```{r}
 #| label: days_at_thresholds_visualization
@@ -62,9 +62,13 @@ ggplot(ginkgo) + geom_line(aes(x = Year, y = cum_neg2)) +
 
 I tried a few thresholds and they all looked like this. I felt like there was more to explore...
 
-## Calculating and plotting degree days
+## 4. Explore degree days
 
-Previous studies have found degree days and growing degree days (gdd) to be good predictors of phenology. [@guo2019; @cayton2015] I calculated daily degree days (max + min / 2) and growing degree days (sum of degree days since august 1st) for each fall.
+Previous studies have found degree days and growing degree days (gdd) to be good predictors of phenology [@guo2019; @cayton2015]
+
+Degree day = (daily max + daily min) / 2
+
+Growing degree day (gdd) = sum of degree days since a given date (I chose August 1)
 
 ```{r}
 #| label: manipulating data to explore relevant temperature thresholds
@@ -104,19 +108,20 @@ ggplot(drop_days) +
 #ggplot(drop_days) + geom_line(aes(x = year, y = julian_drop)) + geom_line(aes(x = year, y = gdd / 4)) # this plot tells me that gdd oscillate consistently with julian day, so there may be more of a correlation than causation here
 ```
 
-This plot (terribly scaled and axis-free as it is) tells us that the drop day has oscillated more or less with cumulative precipitation up to the drop day and the day of the mean growing degree days (gdd) observed on drop days.
+#### Conclusion:
 
-## Building some models...
+Drop day has oscillated with precipitation and the day of the mean drop-day-GDD.
 
-I found that a simple linear model between julian day of drop and growing degree days (gdd) had a significant slope and an adjusted R\^2 of 0.54.
+## 5. Model
 
-A generalized additive model combining gdd, the day of mean gdd during a drop, and cumulative precip also had significant slopes for all predictors with 80% deviance explained.
+**LM** (julian_drop \~ gdd) had a significant slope and an adjusted R\^2 of 0.54
 
-I tried to build a binomial glm and gam and honestly the response plots looked reallyyy funky and I didn't know why... so I abandoned them...
+**GLM** (julian_drop \~ gdd + gdd_day + cum_precip) had significant slopes for all predictors with 80% deviance explained
+
+Got stuck on **Binomial GLM and GAM** response plots (see S1 Fig)
 
 ```{r}
 #| label: building some models
-#| output: false
 
 # trying a degree day model
 gdd_lm = lm(data = drop_days, julian_drop~gdd) # plot(gdd_lm) looks pretty okay
@@ -128,21 +133,19 @@ gam = gam(julian_drop ~ gdd + gdd_day + cum_precip, # obviously gdd and gdd_day 
 
 # trying some binomial models because that feels like the right way to do this
 binom_gdd_glm = glm(data = env_drop, drop~gdd+cum_precip, family = "binomial") 
-plot(binom_gdd_glm)# looks really weird to me
+#plot(binom_gdd_glm)# looks really weird to me
 binom_gam = gam(drop ~ gdd + cum_precip,
     family = "binomial",
     data = env_drop) 
-summary(binom_gam) # went down to explaining 9% variance
+#summary(binom_gam) # went down to explaining 9% variance
 visreg(gam, scale = "response")
 ```
 
-![](images/clipboard-3397317430.png)
-
 QQ plot for the binomial glm
 
-## Predicting the GAM
+## 6. Predict
 
-I gathered data for weather from this fall from nerrsdata.org [@noaanationalestuarineresearchreservesystem2019]
+Data for weather from this fall from [@noaanationalestuarineresearchreservesystem2019]
 
 ```{r, warnings = F}
 #| label: download fall 2025 weather data
@@ -186,9 +189,7 @@ ggplot(env2025_proj) + geom_line(aes(x = date, y = pred)) +
 
 ```
 
-Hmmmmmmmmm.....
-
-#### Good news: 
+#### Good news:
 
 Given the most updated data on the date of the drop, my model predicted the date correctly.
 
@@ -196,7 +197,7 @@ Given the most updated data on the date of the drop, my model predicted the date
 
 Confidence intervals for my model's predictions aren't high enough.
 
-## Continuing thoughts...
+## 7. Discussion
 
 I think I'm on the right track with:
 
@@ -207,12 +208,18 @@ I think I'm on the right track with:
 gam(julian_drop ~ gdd + gdd_day + cum_precip, family = gaussian(), data = drop_days)
 ```
 
-But the model may be better if:
+**The model may be better if:**
 
--   It included historic drop day as a predictor? Like a naive component? Do people do that?
+-   It included historic drop day as a predictor (a sort of naive component)
 
--   I could build a binary model (with non-wacky response plots) so my training dataset could include many days of data rather than just drop days... I think that may also resolve my confidence interval issue
+-   A binary model may also resolve the confidence interval issues because the training dataset would be much larger (S1 Fig)
+
+![](images/clipboard-3397317430.png)
+
+**S1 Fig:** QQ plot for binomial GLM.
 
 ![](images/clipboard-414602589.jpeg)
+
+**S2 Fig:** Texts with a friend.
 
 Other relevant cites: [@anandhi2016; @wu2022]
