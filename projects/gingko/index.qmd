@@ -407,6 +407,52 @@ naive_forecast_gingko
 
 Naive model predicts `r unique(naive_forecast_gingko$.mean)` julian day for gingko leaf drop date, which is approximately `r as.Date("2025-01-01")+naive_forecast_gingko$.mean` or around November 29th, 2025.
 
+# ARIMA
+
+```{r}
+#| echo: False
+#| warning: False
+
+#check autocorrelation
+gingko <- as_tsibble(gingko, index = Year)
+
+
+gingko |>
+  ACF(first_frost_julian_noaa,lag_max = 47) |>
+  autoplot()
+
+gingko|>
+  gg_tsdisplay(difference(first_frost_julian_noaa), plot_type = "partial")
+
+arima_forecast_frost_plot<-gingko|>
+  model(ARIMA(first_frost_julian_noaa)) |>
+  forecast(h=5) |>
+  autoplot(gingko)
+
+arima_forecast_frost_plot
+
+#the forecast
+gingko|>
+  model(ARIMA(first_frost_julian_noaa)) |>
+  forecast(h=5)
+
+#diagnostics
+
+arima_fit<-gingko|>
+  model(ARIMA(first_frost_julian_noaa))
+
+arima_fit|>
+  gg_tsresiduals()
+
+resid_tbl<-augment(arima_fit)
+
+#large p value indicates white noise
+resid_tbl|>
+  features(.resid, ljung_box, lag = 10, dof = 2) 
+
+```
+
+
 # WIP - ERA5 Data Extraction with mcera5 
 
 ```{r,message=F,eval=F}
