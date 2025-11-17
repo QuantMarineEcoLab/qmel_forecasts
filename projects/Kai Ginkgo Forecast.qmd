@@ -1,0 +1,218 @@
+---
+title: "Ginkgo forecasting with growing degree days"
+author: "Kai Frazer"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+## Load data
+
+```{r}
+#| label: libraries
+#| echo: false
+
+library(pacman)
+p_load(tidyverse, vroom, lubridate, ggplot2, mgcv, visreg, DescTools)
+```
+
+```{r}
+#| label: load_and_process_data
+#| output: false
+
+# Load NOAA data that Drew uploaded to GitHub
+setwd("/Users/kailafrazer/Library/CloudStorage/OneDrive-USNH/Forecasting/")
+env = vroom("noaa_hist.csv") %>% # file from GitHub
+  mutate(date = mdy(date), year = year(date), julian = yday(date)) %>%
+  select(name, date, precip, temp_min, temp_max, year, julian)
+ginkgo = vroom("ginkgo.csv") %>% rename("Julian" = "Julian day") # file from GitHub
+```
+
+```{r}
+#| label: cumulative_days_at_thresholds
+#| include: false
+
+# Create a function to find cumulative days at a given threshold for a year and Julian day
+cum_days = function(threshold, Year, Julian) {
+  n = nrow(
+    filter(env, year == Year, 
+           julian >= 213, # Arbitrarily choosing September 1st (julian day 213) as the first day to look for cold thresholds in the year
+           julian <= Julian, 
+           temp_min <= threshold)
+    )
+  return(n)
+}
+# Create columns in the ginkgo dataset with the number of days below a few thresholds
+ginkgo$cum_2 = mapply(cum_days, 2, ginkgo$Year, ginkgo$Julian)
+ginkgo$cum_0 = mapply(cum_days, 0, ginkgo$Year, ginkgo$Julian)
+ginkgo$cum_neg2 = mapply(cum_days, -2, ginkgo$Year, ginkgo$Julian)
+ginkgo$cum_neg4 = mapply(cum_days, -4, ginkgo$Year, ginkgo$Julian)
+ginkgo$cum_neg6 = mapply(cum_days, -6, ginkgo$Year, ginkgo$Julian)
+```
+
+## Cumulative days below a threshold as a predictor
+
+```{r}
+#| label: days_at_thresholds_visualization
+
+ggplot(ginkgo) + geom_line(aes(x = Year, y = cum_neg2)) +
+  ylab("Total days below -2C before ginkgo drop") + 
+  ggtitle("Cumulative days below -2C per year before the drop") + theme_bw() # Plot 
+```
+
+I tried a few thresholds and they all looked like this. I felt like there was more to explore...
+
+## Calculating and plotting degree days
+
+Previous studies have found degree days and growing degree days (gdd) to be good predictors of phenology. [@guo2019; @cayton2015] I calculated daily degree days (max + min / 2) and growing degree days (sum of degree days since august 1st) for each fall.
+
+```{r}
+#| label: manipulating data to explore relevant temperature thresholds
+#| output: false
+
+# build a dataframe with environmental data for every day of every year from august first to january first to december first
+env_drop = left_join(env, ginkgo, join_by(year == Year), keep = F)
+env_drop$drop = mapply(identical, env_drop$julian, env_drop$Julian) # adding a binary column for drop
+env_drop = select(env_drop, date, precip, temp_min, temp_max, year, julian, drop) %>%
+  filter(julian >= 213, julian <= 335)  %>% # august first to january first
+  mutate(deg_day = (temp_min + temp_max) / 2) %>% # guo et al. 2019 (published in forests) found that zero degree days were the most important predictor of ginkgo habitat
+  na.omit() %>% group_by(year) %>% 
+  mutate(gdd = cumsum(deg_day), cum_precip = cumsum(precip)) # calculating cumulative degree days for each year; cumulative degree days (called growing degree days) has been shown to be an important indicator of phenology (see cayton et al. 2015 in esa)
+
+drop_days = filter(env_drop, drop == T) %>% rename("julian_drop" = "julian")
+ # a dataframe with just the days where the leaves dropped
+
+# next, I want to make a column in drop_days with the julian day of the closest to the average gdd for that year
+drop_days = group_by(env_drop, year) %>% 
+  filter(gdd == Closest(gdd, mean(drop_days$gdd))) %>% 
+  mutate(gdd_day = julian) %>% select(year, gdd_day) %>% 
+  right_join(drop_days, join_by(year), keep = F)
+```
+
+```{r}
+#| label: plot again, now using degree days
+
+# Compare Julian drop day with cumulative precipitation and day of mean GDD
+ggplot(drop_days) + 
+  geom_line(aes(x = year, y = julian_drop * 1.2, color = "drop day (scaled)")) + 
+  geom_line(aes(x = year, y = cum_precip * 0.5, color = "cumulative precip (scaled)")) +
+  geom_line(aes(x = year, y = gdd_day, color = "day of mean gdd for drop days")) +
+  scale_color_manual("", values = c("drop day (scaled)" = "#440154", "cumulative precip (scaled)" = "#21918c", "day of mean gdd for drop days" = "#fc8961")) + # lol these are terrible color choices but this plot is just for personal exploration so I won't worry about it for now...
+  theme_classic() + theme(axis.text.y = element_blank(), axis.title.y = element_blank())
+
+# plot year on x, and julian day and growing degree days of drop on two y axes OR julian day of first day the growing degree days was average for the drop
+#ggplot(drop_days) + geom_line(aes(x = year, y = julian_drop)) + geom_line(aes(x = year, y = gdd / 4)) # this plot tells me that gdd oscillate consistently with julian day, so there may be more of a correlation than causation here
+```
+
+This plot (terribly scaled and axis-free as it is) tells us that the drop day has oscillated more or less with cumulative precipitation up to the drop day and the day of the mean growing degree days (gdd) observed on drop days.
+
+## Building some models...
+
+I found that a simple linear model between julian day of drop and growing degree days (gdd) had a significant slope and an adjusted R\^2 of 0.54.
+
+A generalized additive model combining gdd, the day of mean gdd during a drop, and cumulative precip also had significant slopes for all predictors with 80% deviance explained.
+
+I tried to build a binomial glm and gam and honestly the response plots looked reallyyy funky and I didn't know why... so I abandoned them...
+
+```{r}
+#| label: building some models
+#| output: false
+
+# trying a degree day model
+gdd_lm = lm(data = drop_days, julian_drop~gdd) # plot(gdd_lm) looks pretty okay
+
+# a gam
+gam = gam(julian_drop ~ gdd + gdd_day + cum_precip, # obviously gdd and gdd_day are highly colinear but the model explains 24% less deviance without gdd_day and 50% less deviance without gdd
+    family = gaussian(),
+    data = drop_days)
+
+# trying some binomial models because that feels like the right way to do this
+binom_gdd_glm = glm(data = env_drop, drop~gdd+cum_precip, family = "binomial") 
+plot(binom_gdd_glm)# looks really weird to me
+binom_gam = gam(drop ~ gdd + cum_precip,
+    family = "binomial",
+    data = env_drop) 
+summary(binom_gam) # went down to explaining 9% variance
+visreg(gam, scale = "response")
+```
+
+![](images/clipboard-3397317430.png)
+
+QQ plot for the binomial glm
+
+## Predicting the GAM
+
+I gathered data for weather from this fall from nerrsdata.org [@noaanationalestuarineresearchreservesystem2019]
+
+```{r, warnings = F}
+#| label: download fall 2025 weather data
+#| output: false
+
+setwd("/Users/kailafrazer/Library/CloudStorage/OneDrive-USNH/Forecasting/CDMO Fall 2025 Data/"); env2025 = read.csv("GRBGLMET_NoLegend.csv") # YAY that worked! Data was requested from http://www.nerrsdata.org/; citation is below the code chunk (not sure how to integrate Zotero to a code chunk lol)
+
+# To get the present data to match the historical data I used to train the model, I want:
+# Daily values from Aug 1 to present
+# (If I can incorporate the Seavy Island forecast that'd be the next step for projection)
+env2025_clean = env2025
+env2025_clean$datetime = mdy_hm(env2025_clean$DateTimeStamp)
+env2025_clean$date = date(env2025_clean$datetime)
+env2025_clean = env2025_clean %>% group_by(date) %>%
+  reframe(precip = sum(TotPrcp), temp_min = min(ATemp), temp_max = max(ATemp)) # TotPrcp here is measured in mm, does that match the NOAA data from Drew?
+env2025_clean = env2025_clean %>% 
+  mutate(julian = julian(date, origin = as.Date("2025-01-01")), year = year(date), 
+                         deg_day = ((temp_min + temp_max)/2), gdd = cumsum(deg_day), 
+                         cum_precip = cumsum(precip))
+gdd_day_calc = filter(env2025_clean, gdd == Closest(gdd, mean(drop_days$gdd))) %>% 
+  mutate(gdd_day = julian)
+env2025_clean$gdd_day = gdd_day_calc$gdd_day
+```
+
+```{r}
+#| label: predict/project model
+
+pred = as.data.frame(predict(gam, newdata = env2025_clean, se.fit = T))
+env2025_proj = env2025_clean; env2025_proj$pred = pred$fit; env2025_proj$se.fit = pred$se.fit
+env2025_proj = env2025_proj %>% mutate(ci_upper = (pred + (1.96*se.fit)), ci_lower = (pred - (1.96*se.fit)))
+                                        
+hist_preds = ungroup(drop_days) %>% mutate(pred = predict(gam, newdata = ungroup(drop_days))) # just for fun looking at historical predictions          
+```
+
+```{r}
+#| label: plot projections
+
+ggplot(env2025_proj) + geom_line(aes(x = date, y = pred)) +
+  geom_ribbon(aes(x = date, ymin = ci_lower, ymax = ci_upper), alpha = 0.5) +
+  theme_bw() # yuppp
+
+```
+
+Hmmmmmmmmm.....
+
+#### Good news: 
+
+Given the most updated data on the date of the drop, my model predicted the date correctly.
+
+#### Bad news:
+
+Confidence intervals for my model's predictions aren't high enough.
+
+## Continuing thoughts...
+
+I think I'm on the right track with:
+
+```{r}
+#| title: example model script
+#| output: false
+
+gam(julian_drop ~ gdd + gdd_day + cum_precip, family = gaussian(), data = drop_days)
+```
+
+But the model may be better if:
+
+-   It included historic drop day as a predictor? Like a naive component? Do people do that?
+
+-   I could build a binary model (with non-wacky response plots) so my training dataset could include many days of data rather than just drop days... I think that may also resolve my confidence interval issue
+
+![](images/clipboard-414602589.jpeg)
+
+Other relevant cites: [@anandhi2016; @wu2022]
